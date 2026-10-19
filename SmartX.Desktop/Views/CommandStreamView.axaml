@@ -195,7 +195,7 @@
                 <Border Grid.Row="2" Background="#151b2d" CornerRadius="8" Padding="10" Margin="0,0,0,8">
                     <Grid RowDefinitions="Auto,60,Auto">
                         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,4">
-                            <TextBlock Grid.Column="0" Text="📈 Chronological Timeline (SortedDictionary<DateTime, List>)" FontSize="12" FontWeight="Bold" Foreground="#93c5fd"/>
+                            <TextBlock Grid.Column="0" Text="📈 Chronological Timeline (SortedDictionary)" FontSize="12" FontWeight="Bold" Foreground="#93c5fd"/>
                             <TextBlock Grid.Column="1" Text="Sequential by Timestamp" FontSize="10" Foreground="#64748b"/>
                         </Grid>
 
@@ -250,8 +250,8 @@
                  ───────────────────────────────────────────────────── -->
             <Grid Grid.Column="2" RowDefinitions="Auto,150,Auto,130,Auto,*">
 
-                <!-- Command history (Stack<T>) -->
-                <TextBlock Grid.Row="0" Text="📋 Command History (Stack<T> LIFO)" FontSize="13"
+                <!-- Command history (Stack LIFO) -->
+                <TextBlock Grid.Row="0" Text="📋 Command History (Stack LIFO Undo)" FontSize="13"
                            FontWeight="Bold" Foreground="#86efac" Margin="0,0,0,6"/>
                 <Border Grid.Row="1" Background="#0d1f12" CornerRadius="8" Padding="6" Margin="0,0,0,10">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
