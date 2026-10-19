@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace SmartX.Desktop.Models;
@@ -6,12 +7,12 @@ namespace SmartX.Desktop.Models;
 
 public class SensorProfile
 {
-    public string MacAddress          { get; set; } = string.Empty;
-    public string NodeId              { get; set; } = string.Empty;
-    public string Zone                { get; set; } = string.Empty;
-    public string Room                { get; set; } = string.Empty;
-    public int    Category            { get; set; }
-    public string? FirmwareManifestPath { get; set; }
+    public string  MacAddress            { get; set; } = string.Empty;
+    public string  NodeId                { get; set; } = string.Empty;
+    public string  Zone                  { get; set; } = string.Empty;
+    public string  Room                  { get; set; } = string.Empty;
+    public int     Category              { get; set; }
+    public string? FirmwareManifestPath  { get; set; }
 }
 
 public class HeatmapEntry
@@ -23,7 +24,7 @@ public class HeatmapEntry
     public double   Sigma     { get; set; }
     public bool     IsAnomaly { get; set; }
     public string   Status    { get; set; } = string.Empty;
-    public double[] History   { get; set; } = System.Array.Empty<double>();
+    public double[] History   { get; set; } = Array.Empty<double>();
 }
 
 public class ValidationResult
@@ -38,6 +39,7 @@ public class ValidationResult
 public class IncomingPacketModel
 {
     public string   DeviceId   { get; set; } = string.Empty;
+    public string   NodeId     { get; set; } = string.Empty;
     public float    Value      { get; set; }
     public string   Unit       { get; set; } = string.Empty;
     public string   Category   { get; set; } = string.Empty;
@@ -60,13 +62,25 @@ public class CommandRecordModel
 /// <summary>Mirrors API's DeviceState — live device from the Dictionary.</summary>
 public class DeviceStateModel
 {
-    public string Mac       { get; set; } = string.Empty;
-    public string NodeId    { get; set; } = string.Empty;
-    public string Category  { get; set; } = string.Empty;
-    public float  LastValue { get; set; }
-    public string Unit      { get; set; } = string.Empty;
-    public bool   IsAnomaly { get; set; }
-    public string LastSeen  { get; set; } = string.Empty;
+    public string Mac        { get; set; } = string.Empty;
+    public string NodeId     { get; set; } = string.Empty;
+    public string Category   { get; set; } = string.Empty;
+    public float  LastValue  { get; set; }
+    public string Unit       { get; set; } = string.Empty;
+    public bool   IsAnomaly  { get; set; }
+    public string LastSeen   { get; set; } = string.Empty;
+    public string StatusText => IsAnomaly ? "ANOMALY" : "NOMINAL";
+}
+
+/// <summary>Mirrors API's TimelineEntry from the SortedDictionary.</summary>
+public class TimelineEntryModel
+{
+    public DateTime Timestamp { get; set; }
+    public string   Mac       { get; set; } = string.Empty;
+    public string   NodeId    { get; set; } = string.Empty;
+    public float    Value     { get; set; }
+    public string   Unit      { get; set; } = string.Empty;
+    public bool     IsAnomaly { get; set; }
 }
 
 /// <summary>Mirrors API's PredictionResult — one recommendation from the engine.</summary>
@@ -82,8 +96,8 @@ public class PredictionResultModel
 /// <summary>Wraps the /api/commands/stream response envelope.</summary>
 public class CommandStreamResponse
 {
-    public int                      StandardCount { get; set; }
-    public int                      CriticalCount { get; set; }
-    public List<IncomingPacketModel> Standard     { get; set; } = new();
-    public List<IncomingPacketModel> Critical     { get; set; } = new();
+    public int                       StandardCount { get; set; }
+    public int                       CriticalCount { get; set; }
+    public List<IncomingPacketModel> Standard      { get; set; } = new();
+    public List<IncomingPacketModel> Critical      { get; set; } = new();
 }

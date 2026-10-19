@@ -8,6 +8,13 @@ public partial class MainViewModel : ViewModelBase
 {
     private readonly ApiClient _api = new();
 
+    // Cached ViewModels so that application state (filters, inputs, history) is
+    // seamlessly preserved across asynchronous view navigation.
+    private readonly HeatmapViewModel       _heatmapViewModel;
+    private readonly CommandStreamViewModel _commandStreamViewModel;
+    private readonly TopologyViewModel      _topologyViewModel;
+    private readonly RegistryViewModel      _registryViewModel;
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsHeatmapActive))]
     [NotifyPropertyChangedFor(nameof(IsCommandStreamActive))]
@@ -23,18 +30,23 @@ public partial class MainViewModel : ViewModelBase
 
     public MainViewModel()
     {
-        _currentView = new HeatmapViewModel(_api);
+        _heatmapViewModel       = new HeatmapViewModel(_api);
+        _commandStreamViewModel = new CommandStreamViewModel(_api);
+        _topologyViewModel      = new TopologyViewModel(_api);
+        _registryViewModel      = new RegistryViewModel(_api);
+
+        _currentView = _heatmapViewModel;
     }
 
     [RelayCommand]
-    private void NavigateToHeatmap() => CurrentView = new HeatmapViewModel(_api);
+    private void NavigateToHeatmap() => CurrentView = _heatmapViewModel;
 
     [RelayCommand]
-    private void NavigateToCommandStream() => CurrentView = new CommandStreamViewModel(_api);
+    private void NavigateToCommandStream() => CurrentView = _commandStreamViewModel;
 
     [RelayCommand]
-    private void NavigateToTopology() => CurrentView = new TopologyViewModel(_api);
+    private void NavigateToTopology() => CurrentView = _topologyViewModel;
 
     [RelayCommand]
-    private void NavigateToRegistry() => CurrentView = new RegistryViewModel(_api);
+    private void NavigateToRegistry() => CurrentView = _registryViewModel;
 }

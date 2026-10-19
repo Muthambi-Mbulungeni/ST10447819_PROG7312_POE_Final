@@ -49,9 +49,9 @@ public sealed class CommandService
             _queue.Enqueue(packet);
         }
 
-        // Keep DeviceDirectory (Dictionary) in sync
+        // Keep DeviceDirectory (Dictionary O(1) + SortedDictionary timeline) in sync
         _directory.UpsertDevice(
-            packet.DeviceId, packet.DeviceId, packet.Category,
+            packet.DeviceId, packet.NodeId, packet.Category,
             packet.Value, packet.Unit, packet.IsCritical);
     }
 
@@ -94,12 +94,12 @@ public sealed class CommandService
 
     // ── Alert management (HashSet) ──────────────────────────────
 
-    public bool ResolveAlert(string alertKey)    => _alerts.ResolveAlert(alertKey);
+    public bool ResolveAlert(string alertKey)            => _alerts.ResolveAlert(alertKey);
     public IReadOnlyCollection<string> GetActiveAlerts() => _alerts.GetAllActive();
 
     // ── Search recording + predictions ──────────────────────────
 
-    public void RecordSearch(string category)        => _prediction.RecordSearch(category);
+    public void RecordSearch(string query) => _prediction.RecordSearch(query);
 
     public IReadOnlyList<PredictionResult> GetPredictions()
     {
@@ -110,8 +110,9 @@ public sealed class CommandService
 
     // ── Device directory (Dictionary + SortedDictionary) ────────
 
-    public IReadOnlyList<DeviceState>   GetAllDevices()                  => _directory.GetAllDevices();
-    public IReadOnlyList<DeviceState>   GetDevicesByCategory(string cat) => _directory.GetByCategory(cat);
-    public IReadOnlyList<DeviceState>   GetAnomalousDevices()            => _directory.GetAnomalous();
-    public IReadOnlyList<TimelineEntry> GetTimeline(int n = 150)         => _directory.GetTimeline(n);
+    public IReadOnlyList<DeviceState>   GetAllDevices()                              => _directory.GetAllDevices();
+    public IReadOnlyList<DeviceState>   GetDevicesByCategory(string cat)             => _directory.GetByCategory(cat);
+    public IReadOnlyList<DeviceState>   GetAnomalousDevices()                        => _directory.GetAnomalous();
+    public IReadOnlyList<DeviceState>   SearchDevices(string? query, bool? anomOnly) => _directory.Search(query, anomOnly);
+    public IReadOnlyList<TimelineEntry> GetTimeline(int n = 100)                     => _directory.GetTimeline(n);
 }

@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using SmartX.Desktop.Models;
@@ -13,12 +14,13 @@ namespace SmartX.Desktop.ViewModels;
 /// ViewModel for the Real-Time Command Stream page (Part 2 — 70 marks).
 ///
 /// Data structures surfaced to the UI:
-///   • Critical queue (PriorityQueue) — shown red at top of feed
-///   • Standard queue (Queue)         — shown below in FIFO order
-///   • Command history (Stack)        — most-recent first, with Undo
-///   • Active alerts (HashSet)        — unique, no duplicates
-///   • Devices (Dictionary)           — filtered by category/anomaly
-///   • Predictions                    — recommendation engine output
+///   • Critical queue (PriorityQueue<T, int>) — shown in red at top of feed
+///   • Standard queue (Queue<T>)              — shown below in FIFO order
+///   • Command history (Stack<T>)             — LIFO order with Undo
+///   • Active alerts (HashSet<T>)             — unique active error states, deduplicated
+///   • Devices (Dictionary<K, V>)             — O(1) MAC lookup, filtered by category/anomaly
+///   • Chronological Timeline (SortedDict)    — sorted sequentially by timestamp for graphs
+///   • Automated Insights (PredictionEngine)  — pattern analysis and proactive recommendations
 /// </summary>
 public partial class CommandStreamViewModel : ViewModelBase
 {
@@ -27,12 +29,26 @@ public partial class CommandStreamViewModel : ViewModelBase
 
     // ── Observable collections bound to the view ───────────────
 
-    [ObservableProperty] private ObservableCollection<IncomingPacketModel> _criticalPackets = new();
-    [ObservableProperty] private ObservableCollection<IncomingPacketModel> _standardPackets = new();
-    [ObservableProperty] private ObservableCollection<CommandRecordModel>  _commandHistory  = new();
-    [ObservableProperty] private ObservableCollection<string>              _activeAlerts    = new();
-    [ObservableProperty] private ObservableCollection<DeviceStateModel>    _devices         = new();
-    [ObservableProperty] private ObservableCollection<PredictionResultModel> _predictions   = new();
+    [ObservableProperty] private ObservableCollection<IncomingPacketModel>  _criticalPackets  = new();
+    [ObservableProperty] private ObservableCollection<IncomingPacketModel>  _standardPackets  = new();
+    [ObservableProperty] private ObservableCollection<CommandRecordModel>   _commandHistory   = new();
+    [ObservableProperty] private ObservableCollection<string>               _activeAlerts     = new();
+    [ObservableProperty] private ObservableCollection<DeviceStateModel>     _devices          = new();
+    [ObservableProperty] private ObservableCollection<TimelineEntryModel>   _timeline         = new();
+    [ObservableProperty] private ObservableCollection<PredictionResultModel> _predictions    = new();
+
+    // ── Timeline Sparkline for MiniGraph ───────────────────────
+    [ObservableProperty] private double[] _timelineSparkline = Array.Empty<double>();
+
+    // ── Available Command Types ────────────────────────────────
+    [ObservableProperty] private ObservableCollection<string> _availableCommandTypes = new()
+    {
+        "ManualOverride",
+        "TriggerActuator",
+        "ShutdownDevice",
+        "RestartDevice",
+        "AdjustThreshold"
+    };
 
     // ── Queue depth stats for the header ──────────────────────
     [ObservableProperty] private int    _standardQueueDepth;
@@ -41,7 +57,7 @@ public partial class CommandStreamViewModel : ViewModelBase
     [ObservableProperty] private string _statusMessage = "Connecting…";
 
     // ── Command issue form ─────────────────────────────────────
-    [ObservableProperty] private string _targetDeviceId = string.Empty;
+    [ObservableProperty] private string _targetDeviceId = "AA:BB:CC:DD:00:00";
     [ObservableProperty] private string _commandType    = "ManualOverride";
     [ObservableProperty] private string _commandPayload = string.Empty;
 
@@ -63,13 +79,13 @@ public partial class CommandStreamViewModel : ViewModelBase
         _ = RefreshAllAsync();
     }
 
-    // ── Polling ────────────────────────────────────────────────
+    // ── Polling & Data Retrieval ───────────────────────────────
 
     private async Task RefreshAllAsync()
     {
         try
         {
-            // 1. Queue snapshot (Queue<T> + PriorityQueue<T,int>)
+            // 1. Queue snapshot (Queue<T> FIFO + PriorityQueue<T,int> bypass)
             var stream = await _api.GetCommandStreamAsync();
             StandardQueueDepth = stream.StandardCount;
             CriticalQueueDepth = stream.CriticalCount;
@@ -80,26 +96,35 @@ public partial class CommandStreamViewModel : ViewModelBase
             StandardPackets.Clear();
             foreach (var p in stream.Standard) StandardPackets.Add(p);
 
-            // 2. Command history (Stack<T> snapshot)
+            // 2. Command history (Stack<T> LIFO snapshot)
             var history = await _api.GetCommandHistoryAsync();
             CommandHistory.Clear();
             foreach (var c in history) CommandHistory.Add(c);
 
-            // 3. Active alerts (HashSet<T> snapshot)
+            // 3. Active alerts (HashSet<T> deduplicated snapshot)
             var alerts = await _api.GetActiveAlertsAsync();
             ActiveAlertCount = alerts.Count;
             ActiveAlerts.Clear();
             foreach (var a in alerts) ActiveAlerts.Add(a);
 
-            // 4. Predictions
+            // 4. Automated Insights (PredictionEngine recommendations)
             var preds = await _api.GetPredictionsAsync();
             Predictions.Clear();
             foreach (var p in preds) Predictions.Add(p);
 
-            // 5. Devices (always refresh, filter applied on server)
+            // 5. Historical logs from SortedDictionary (ordered by timestamp)
+            var timeline = await _api.GetTimelineAsync(40);
+            Timeline.Clear();
+            foreach (var t in timeline) Timeline.Add(t);
+            if (timeline.Count > 1)
+            {
+                TimelineSparkline = timeline.Select(t => (double)t.Value).ToArray();
+            }
+
+            // 6. Devices from Dictionary (O(1) lookups)
             await LoadDevicesAsync();
 
-            StatusMessage = $"Last updated: {DateTime.Now:HH:mm:ss}";
+            StatusMessage = $"Synchronised at {DateTime.Now:HH:mm:ss}";
         }
         catch (Exception ex)
         {
@@ -119,7 +144,7 @@ public partial class CommandStreamViewModel : ViewModelBase
         if (result is not null)
         {
             StatusMessage  = $"✅ Command {result.Id} issued to {result.DeviceId}";
-            CommandPayload = string.Empty; // Clear input after send
+            CommandPayload = string.Empty;
         }
         await RefreshAllAsync();
     }
@@ -129,14 +154,45 @@ public partial class CommandStreamViewModel : ViewModelBase
     private async Task UndoCommandAsync()
     {
         UndoResult = await _api.UndoLastCommandAsync();
+        StatusMessage = $"↩ {UndoResult}";
         await RefreshAllAsync();
     }
 
-    /// <summary>Applies category/anomaly filter → records search for Prediction Engine.</summary>
+    /// <summary>Simulates an immediate critical alert to demonstrate PriorityQueue bypass.</summary>
+    [RelayCommand]
+    private async Task SimulateCriticalAlertAsync()
+    {
+        var target = string.IsNullOrWhiteSpace(TargetDeviceId) ? "AA:BB:CC:DD:00:00" : TargetDeviceId;
+        await _api.SimulateAlertAsync(target, 4850.0f, "SPIKE", "PowerConsumption");
+        StatusMessage = $"⚡ Simulated Priority-0 alert on {target}!";
+        await RefreshAllAsync();
+    }
+
+    /// <summary>Selects a device from the list to populate the command form.</summary>
+    [RelayCommand]
+    private void SelectDevice(DeviceStateModel? device)
+    {
+        if (device is null) return;
+        TargetDeviceId = device.Mac;
+        StatusMessage  = $"Selected: {device.NodeId} ({device.Mac})";
+    }
+
+    /// <summary>Applies a target device from a predictive insight recommendation.</summary>
+    [RelayCommand]
+    private void ApplyRecommendation(PredictionResultModel? prediction)
+    {
+        if (prediction is null) return;
+        if (!string.IsNullOrWhiteSpace(prediction.RelatedDevice))
+        {
+            TargetDeviceId = prediction.RelatedDevice;
+            StatusMessage  = $"Focused on {prediction.RelatedDevice} from insight.";
+        }
+    }
+
+    /// <summary>Applies category/query filter → records search for Prediction Engine.</summary>
     [RelayCommand]
     private async Task ApplyFilterAsync()
     {
-        // Record the search so PredictionEngine can analyse patterns
         if (!string.IsNullOrWhiteSpace(FilterCategory))
             await _api.RecordSearchAsync(FilterCategory);
 
@@ -165,9 +221,9 @@ public partial class CommandStreamViewModel : ViewModelBase
 
     private async Task LoadDevicesAsync()
     {
-        var category    = string.IsNullOrWhiteSpace(FilterCategory) ? null : FilterCategory;
-        bool? anomOnly  = ShowAnomalyOnly ? true : null;
-        var list        = await _api.GetDevicesAsync(category, anomOnly);
+        var query      = string.IsNullOrWhiteSpace(FilterCategory) ? null : FilterCategory;
+        bool? anomOnly = ShowAnomalyOnly ? true : null;
+        var list       = await _api.GetDevicesAsync(query, anomOnly);
 
         Devices.Clear();
         foreach (var d in list) Devices.Add(d);

@@ -7,8 +7,8 @@ namespace SmartX.Api.Services;
 /// <summary>
 /// Background service that continuously generates simulated sensor telemetry.
 /// Every tick it feeds data into:
-///   • TelemetryStore  (Part 1 — IngestionQueue per device)
-///   • CommandService  (Part 2 — Queue/PriorityQueue + DeviceDirectory)
+///   • TelemetryStore  (Part 1 — IngestionQueue per device, with FlushBuffer called)
+///   • CommandService  (Part 2 — Queue/PriorityQueue + DeviceDirectory + HashSet)
 /// </summary>
 public class TelemetryGeneratorService : BackgroundService
 {
@@ -45,7 +45,7 @@ public class TelemetryGeneratorService : BackgroundService
                     _                               => (0.0f,     "raw")
                 };
 
-                // Generate a batch of readings
+                // Generate a batch of readings (simulate high-frequency sampling)
                 float[] batch = new float[5];
                 bool hasCritical = false;
 
@@ -54,7 +54,7 @@ public class TelemetryGeneratorService : BackgroundService
                     float jitter = (float)(_rng.NextDouble() * 10.0 - 5.0);
                     batch[i] = baseline + jitter;
 
-                    // 2% chance to produce a critical spike
+                    // 2% chance to produce a critical spike (e.g. power surge, moisture drop)
                     if (_rng.NextDouble() < 0.02)
                     {
                         batch[i]    = baseline * (float)(_rng.NextDouble() * 3.0 + 2.0);
@@ -73,6 +73,7 @@ public class TelemetryGeneratorService : BackgroundService
 
                 var packet = new IncomingPacket(
                     DeviceId:   mac,
+                    NodeId:     profile.NodeId,
                     Value:      representativeValue,
                     Unit:       unit,
                     Category:   profile.Category.ToString(),

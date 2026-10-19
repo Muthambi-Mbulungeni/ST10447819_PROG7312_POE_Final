@@ -128,13 +128,34 @@ app.MapGet("/api/telemetry/{deviceId}", (string deviceId, TelemetryStore store) 
     Results.Ok(store.GetHistory(deviceId)))
     .WithTags("Part 1 – Telemetry");
 
-app.MapPost("/api/telemetry/ingest", (IngestRequest req, TelemetryStore store, SensorRegistry reg) =>
+app.MapPost("/api/telemetry/ingest", (IngestRequest req, TelemetryStore store, SensorRegistry reg, CommandService cmdSvc) =>
 {
     if (!reg.Exists(req.DeviceId))
         return Results.NotFound($"Device {req.DeviceId} is not registered.");
 
     store.Ingest(req.DeviceId, req.Value, req.Unit);
-    return Results.Ok(new { req.DeviceId, req.Value, req.Unit, Timestamp = DateTime.UtcNow });
+
+    var profile = reg.Get(req.DeviceId);
+    string cat = profile?.Category.ToString() ?? "Environmental";
+    string nodeId = profile?.NodeId ?? req.DeviceId;
+
+    // Check if anomalous
+    bool isAnomaly = req.Value > 500.0f || (profile != null && Math.Abs(req.Value - 220f) > 80f);
+    int priority = isAnomaly ? 0 : 2;
+
+    var packet = new IncomingPacket(
+        DeviceId:   req.DeviceId,
+        NodeId:     nodeId,
+        Value:      req.Value,
+        Unit:       req.Unit,
+        Category:   cat,
+        IsCritical: isAnomaly,
+        Priority:   priority,
+        ReceivedAt: DateTime.UtcNow);
+
+    cmdSvc.IngestPacket(packet);
+
+    return Results.Ok(new { req.DeviceId, req.Value, req.Unit, IsCritical = isAnomaly, Priority = priority, Timestamp = DateTime.UtcNow });
 }).WithTags("Part 1 – Telemetry");
 
 // =============================================================================
@@ -152,6 +173,32 @@ app.MapGet("/api/commands/stream", (CommandService svc) =>
         CriticalCount  = critCount,
         Standard       = standard.TakeLast(50),   // last 50 for the dashboard feed
         Critical       = critical
+    });
+}).WithTags("Part 2 – Command Stream");
+
+// ── Simulate a critical alert (PriorityQueue<T, int> bypass demonstration) ─
+app.MapPost("/api/commands/simulate-alert", (SimulateAlertRequest req, CommandService svc, SensorRegistry reg) =>
+{
+    var profile = reg.Get(req.DeviceId);
+    string nodeId = profile?.NodeId ?? req.DeviceId;
+    string cat = profile?.Category.ToString() ?? req.Category ?? "PowerConsumption";
+
+    var packet = new IncomingPacket(
+        DeviceId:   req.DeviceId,
+        NodeId:     nodeId,
+        Value:      req.Value,
+        Unit:       req.Unit ?? "W",
+        Category:   cat,
+        IsCritical: true,
+        Priority:   0, // PriorityQueue top priority (bypasses FIFO queue)
+        ReceivedAt: DateTime.UtcNow);
+
+    svc.IngestPacket(packet);
+
+    return Results.Ok(new
+    {
+        Message = $"Critical alert simulated for {nodeId} ({req.DeviceId}). Ingested to PriorityQueue.",
+        Packet = packet
     });
 }).WithTags("Part 2 – Command Stream");
 
@@ -193,17 +240,11 @@ app.MapPost("/api/alerts/resolve/{alertKey}", (string alertKey, CommandService s
 // ── Devices (Dictionary<K,V> lookup) ──────────────────────────────────────
 app.MapGet("/api/devices", (CommandService svc, string? category, bool? anomalyOnly) =>
 {
-    // Record the search for the prediction engine's pattern analysis
+    // Record search for prediction engine pattern analysis
     if (!string.IsNullOrWhiteSpace(category))
         svc.RecordSearch(category);
 
-    var devices = string.IsNullOrWhiteSpace(category)
-        ? svc.GetAllDevices()
-        : svc.GetDevicesByCategory(category);
-
-    if (anomalyOnly == true)
-        devices = devices.Where(d => d.IsAnomaly).ToList();
-
+    var devices = svc.SearchDevices(category, anomalyOnly);
     return Results.Ok(devices);
 }).WithTags("Part 2 – Devices");
 

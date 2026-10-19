@@ -166,12 +166,28 @@ public sealed class ApiClient
                ?? new List<PredictionResultModel>();
     }
 
-    /// <summary>POST /api/devices/search — records a category search for pattern analysis.</summary>
-    public async Task RecordSearchAsync(string category)
+    /// <summary>
+    /// GET /api/devices/timeline — retrieves chronologically ordered readings from the SortedDictionary.
+    /// </summary>
+    public async Task<List<TimelineEntryModel>> GetTimelineAsync(int n = 60)
     {
-        if (string.IsNullOrWhiteSpace(category)) return;
-        await _client.PostAsync(
-            $"devices/search?category={HttpUtility.UrlEncode(category)}",
-            new StringContent("{}", Encoding.UTF8, "application/json"));
+        var response = await _client.GetAsync($"devices/timeline?n={n}");
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<List<TimelineEntryModel>>()
+               ?? new List<TimelineEntryModel>();
+    }
+
+    /// <summary>
+    /// POST /api/commands/simulate-alert — injects a critical alert directly to test the PriorityQueue bypass.
+    /// </summary>
+    public async Task<bool> SimulateAlertAsync(string deviceId, float value = 9999f, string? unit = null, string? category = null)
+    {
+        var body = new { DeviceId = deviceId, Value = value, Unit = unit, Category = category };
+        var json = new StringContent(
+            JsonSerializer.Serialize(body),
+            Encoding.UTF8, "application/json");
+
+        var response = await _client.PostAsync("commands/simulate-alert", json);
+        return response.IsSuccessStatusCode;
     }
 }

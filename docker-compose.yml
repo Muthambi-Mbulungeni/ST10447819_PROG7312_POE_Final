@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  smartx-api:
+    build:
+      context: .
+      dockerfile: SmartX.Api/Dockerfile
+    container_name: smartx-api
+    ports:
+      - "5050:5050"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5050
+    volumes:
+      - ./uploads:/app/uploads
+    restart: unless-stopped

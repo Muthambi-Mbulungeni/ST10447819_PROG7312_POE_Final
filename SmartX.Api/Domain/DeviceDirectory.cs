@@ -12,9 +12,9 @@ namespace SmartX.Api.Domain;
 // ============================================================
 // SortedDictionary<DateTime, List<ReadingEntry>> stores all
 // historical readings. Because SortedDictionary keeps its keys
-// in ascending order at all times, the frontend can render a
-// timeline graph by simply iterating the dictionary — no
-// post-sort required, and inserts remain O(log n).
+// in ascending order at all times, the frontend dashboard can
+// render timeline graphs sequentially by timestamp efficiently —
+// no post-sort required, and inserts remain O(log n).
 // ============================================================
 public sealed class DeviceDirectory
 {
@@ -41,23 +41,24 @@ public sealed class DeviceDirectory
 
         lock (_gate)
         {
-            // Dictionary upsert — O(1) average
+            // Dictionary upsert — O(1) average lookup and update
             _devices[mac] = new DeviceState(mac, nodeId, category, lastValue, unit, isAnomaly, now);
 
-            // SortedDictionary insert — O(log n), keys auto-sorted by DateTime
-            // Use a key with microsecond precision to avoid collisions
-            var key = now;
-            if (_timeline.ContainsKey(key))
-                key = key.AddTicks(1); // nudge to guarantee uniqueness
-
-            _timeline[key] = new List<ReadingEntry>
+            // SortedDictionary insert — O(log n), keys are kept strictly in chronological order
+            if (!_timeline.TryGetValue(now, out var list))
             {
-                new ReadingEntry(mac, nodeId, lastValue, unit, isAnomaly)
-            };
+                list = new List<ReadingEntry>();
+                _timeline[now] = list;
+            }
 
-            // Cap timeline at 2000 entries to bound memory
-            while (_timeline.Count > 2000)
-                _timeline.Remove(_timeline.Keys.First());
+            list.Add(new ReadingEntry(mac, nodeId, lastValue, unit, isAnomaly));
+
+            // Bound timeline to 1000 timestamp slots to prevent unbounded memory growth
+            while (_timeline.Count > 1000)
+            {
+                var oldestKey = _timeline.Keys.First();
+                _timeline.Remove(oldestKey);
+            }
         }
     }
 
@@ -92,6 +93,34 @@ public sealed class DeviceDirectory
             return _devices.Values.Where(d => d.IsAnomaly).ToList();
     }
 
+    /// <summary>
+    /// Search and filter functionality across device Category, NodeId, or MAC address,
+    /// with optional active alert state filtering.
+    /// </summary>
+    public IReadOnlyList<DeviceState> Search(string? query, bool? anomalyOnly = null)
+    {
+        lock (_gate)
+        {
+            var results = _devices.Values.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var term = query.Trim();
+                results = results.Where(d =>
+                    d.Category.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                    d.NodeId.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                    d.Mac.Contains(term, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (anomalyOnly == true)
+            {
+                results = results.Where(d => d.IsAnomaly);
+            }
+
+            return results.ToList();
+        }
+    }
+
     // ── SortedDictionary timeline (O(log n) insert, O(1) ordered iteration) ──
 
     /// <summary>
@@ -99,7 +128,7 @@ public sealed class DeviceDirectory
     /// timestamp order. Because SortedDictionary keeps keys sorted, no explicit
     /// sort is ever needed here.
     /// </summary>
-    public IReadOnlyList<TimelineEntry> GetTimeline(int lastN = 150)
+    public IReadOnlyList<TimelineEntry> GetTimeline(int lastN = 100)
     {
         lock (_gate)
         {

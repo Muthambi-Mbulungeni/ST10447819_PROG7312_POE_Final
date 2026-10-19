@@ -7,6 +7,7 @@ namespace SmartX.Api.Domain;
 /// </summary>
 public sealed record IncomingPacket(
     string   DeviceId,
+    string   NodeId,
     float    Value,
     string   Unit,
     string   Category,
