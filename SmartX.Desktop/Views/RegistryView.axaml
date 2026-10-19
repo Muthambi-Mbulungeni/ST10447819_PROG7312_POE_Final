@@ -1,0 +1,69 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:SmartX.Desktop.ViewModels"
+             x:Class="SmartX.Desktop.Views.RegistryView"
+             x:DataType="vm:RegistryViewModel"
+             Background="#1a1a2e">
+    <StackPanel Margin="20" Spacing="20">
+        <TextBlock Text="Sensor Registry &amp; Firmware Management" FontSize="24" FontWeight="Bold" Foreground="White" />
+        
+        <Border Background="#252542" CornerRadius="8">
+            <ScrollViewer>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <!-- Header -->
+                    <Grid Grid.Row="0" Margin="15" Background="#2d2d4f">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="MAC Address" FontWeight="Bold" Foreground="White"/>
+                        <TextBlock Grid.Column="1" Text="Zone &amp; Room" FontWeight="Bold" Foreground="White"/>
+                        <TextBlock Grid.Column="2" Text="Node ID" FontWeight="Bold" Foreground="White"/>
+                        <TextBlock Grid.Column="3" Text="Category" FontWeight="Bold" Foreground="White"/>
+                        <TextBlock Grid.Column="4" Text="Action" FontWeight="Bold" Foreground="White"/>
+                    </Grid>
+
+                    <!-- Items -->
+                    <ItemsControl Grid.Row="1" ItemsSource="{Binding Sensors}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="15,5" Background="Transparent">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="2*"/>
+                                        <ColumnDefinition Width="2*"/>
+                                        <ColumnDefinition Width="1*"/>
+                                        <ColumnDefinition Width="1*"/>
+                                        <ColumnDefinition Width="1*"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <TextBlock Grid.Column="0" Text="{Binding MacAddress}" Foreground="LightGray" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Zone}" Foreground="LightGray" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding NodeId}" Foreground="LightGray" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="3" Text="{Binding Category}" Foreground="LightGray" VerticalAlignment="Center"/>
+                                    
+                                    <Button Grid.Column="4" Content="Upload" 
+                                            Click="OnUploadClicked"
+                                            Tag="{Binding MacAddress}"
+                                            IsVisible="{Binding FirmwareManifestPath, Converter={x:Static ObjectConverters.IsNull}}"
+                                            Background="#3b82f6" Foreground="White" CornerRadius="4"/>
+                                    
+                                    <TextBlock Grid.Column="4" Text="Secured (AES-256)" 
+                                               Foreground="#10b981" FontWeight="Bold" VerticalAlignment="Center"
+                                               IsVisible="{Binding FirmwareManifestPath, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </ScrollViewer>
+        </Border>
+    </StackPanel>
+</UserControl>

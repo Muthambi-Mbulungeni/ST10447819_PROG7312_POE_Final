@@ -1,0 +1,30 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+TestResults/
+publish/
+*.nupkg
+
+# ASP.NET Core
+launchSettings.json
+
+# Node / React
+node_modules/
+dist/
+.env
+.env.local
+.env.production
+
+# Local upload store
+uploads/
+
+# Editors
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db

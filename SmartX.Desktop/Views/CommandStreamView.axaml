@@ -1,0 +1,290 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:SmartX.Desktop.ViewModels"
+             x:Class="SmartX.Desktop.Views.CommandStreamView"
+             x:DataType="vm:CommandStreamViewModel"
+             Background="#0f0f1a">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- ═══════════════════════════════════════════════════════════
+             HEADER BAR — Queue depths + alert count
+             ═══════════════════════════════════════════════════════════ -->
+        <Border Grid.Row="0" Background="#1a1a2e" Padding="20,12">
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto">
+                <StackPanel Grid.Column="0" Orientation="Vertical">
+                    <TextBlock Text="Real-Time Command Stream" FontSize="22" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="#8B92A9" Margin="0,2,0,0"/>
+                </StackPanel>
+
+                <!-- Critical Queue depth (PriorityQueue) -->
+                <Border Grid.Column="1" Background="#7f1d1d" CornerRadius="8" Padding="14,6" Margin="0,0,10,0">
+                    <StackPanel>
+                        <TextBlock Text="{Binding CriticalQueueDepth}" FontSize="20" FontWeight="Bold" Foreground="#fca5a5" HorizontalAlignment="Center"/>
+                        <TextBlock Text="CRITICAL" FontSize="10" Foreground="#fca5a5" FontWeight="Bold" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Standard Queue depth -->
+                <Border Grid.Column="2" Background="#1e3a5f" CornerRadius="8" Padding="14,6" Margin="0,0,10,0">
+                    <StackPanel>
+                        <TextBlock Text="{Binding StandardQueueDepth}" FontSize="20" FontWeight="Bold" Foreground="#93c5fd" HorizontalAlignment="Center"/>
+                        <TextBlock Text="QUEUED" FontSize="10" Foreground="#93c5fd" FontWeight="Bold" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Active alerts (HashSet count) -->
+                <Border Grid.Column="3" Background="#422006" CornerRadius="8" Padding="14,6" Margin="0,0,10,0">
+                    <StackPanel>
+                        <TextBlock Text="{Binding ActiveAlertCount}" FontSize="20" FontWeight="Bold" Foreground="#fdba74" HorizontalAlignment="Center"/>
+                        <TextBlock Text="ALERTS" FontSize="10" Foreground="#fdba74" FontWeight="Bold" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Command history depth (Stack) -->
+                <Border Grid.Column="4" Background="#1a2e1a" CornerRadius="8" Padding="14,6">
+                    <StackPanel>
+                        <TextBlock Text="{Binding CommandHistory.Count}" FontSize="20" FontWeight="Bold" Foreground="#86efac" HorizontalAlignment="Center"/>
+                        <TextBlock Text="HISTORY" FontSize="10" Foreground="#86efac" FontWeight="Bold" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- ═══════════════════════════════════════════════════════════
+             MAIN CONTENT — three-column layout
+             ═══════════════════════════════════════════════════════════ -->
+        <Grid Grid.Row="1" ColumnDefinitions="300,*,320" Margin="12">
+
+            <!-- ─────────────────────────────────────────────────────
+                 LEFT PANEL — Live packet feed (Queue + PriorityQueue)
+                 ───────────────────────────────────────────────────── -->
+            <Grid Grid.Column="0" RowDefinitions="Auto,Auto,*" Margin="0,0,8,0">
+
+                <!-- Critical alerts (PriorityQueue) -->
+                <TextBlock Grid.Row="0" Text="⚡ Critical Queue (Priority)" FontSize="13" FontWeight="Bold"
+                           Foreground="#fca5a5" Margin="0,0,0,6"/>
+
+                <Border Grid.Row="1" Background="#1c0a0a" CornerRadius="8" Padding="8" Margin="0,0,0,8"
+                        MaxHeight="200">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding CriticalPackets}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="#3d1515" CornerRadius="6" Padding="8" Margin="0,0,0,4">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding DeviceId}" FontWeight="Bold" Foreground="#fca5a5" FontSize="11"/>
+                                            <TextBlock Text="{Binding Value, StringFormat='Value: {0:F2}'}" Foreground="#fecaca" FontSize="11"/>
+                                            <TextBlock Text="{Binding Category}" Foreground="#ef4444" FontSize="10"/>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Border>
+
+                <!-- Standard queue (FIFO Queue) -->
+                <Grid Grid.Row="2" RowDefinitions="Auto,*">
+                    <TextBlock Grid.Row="0" Text="📥 Standard Queue (FIFO)" FontSize="13" FontWeight="Bold"
+                               Foreground="#93c5fd" Margin="0,0,0,6"/>
+                    <Border Grid.Row="1" Background="#0a1225" CornerRadius="8" Padding="8">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding StandardPackets}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#0f1e3a" CornerRadius="6" Padding="8" Margin="0,0,0,3">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0">
+                                                    <TextBlock Text="{Binding DeviceId}" Foreground="#93c5fd" FontSize="10" FontWeight="Bold"/>
+                                                    <TextBlock Text="{Binding Category}" Foreground="#60a5fa" FontSize="10"/>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="1" Text="{Binding Value, StringFormat='{}{0:F1}'}"
+                                                           Foreground="White" FontSize="13" FontWeight="Bold"
+                                                           VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+            </Grid>
+
+            <!-- ─────────────────────────────────────────────────────
+                 MIDDLE PANEL — Devices (Dictionary) + Command form
+                 ───────────────────────────────────────────────────── -->
+            <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*,Auto" Margin="0,0,8,0">
+
+                <!-- Search / Filter bar -->
+                <Border Grid.Row="0" Background="#1a1a2e" CornerRadius="8" Padding="12" Margin="0,0,0,8">
+                    <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                        <TextBox Grid.Column="0" Text="{Binding FilterCategory}"
+                                 Watermark="Filter by category (e.g. PowerConsumption)…"
+                                 Background="#252542" Foreground="White"
+                                 CornerRadius="6" Padding="8,6" Margin="0,0,8,0"/>
+                        <CheckBox Grid.Column="1" Content="Anomaly Only" IsChecked="{Binding ShowAnomalyOnly}"
+                                  Foreground="#fdba74" Margin="0,0,8,0"/>
+                        <Button Grid.Column="2" Content="🔍 Search" Command="{Binding ApplyFilterCommand}"
+                                Background="#3b82f6" Foreground="White" CornerRadius="6" Padding="10,6" Margin="0,0,6,0"/>
+                        <Button Grid.Column="3" Content="✕ Clear" Command="{Binding ClearFilterCommand}"
+                                Background="#374151" Foreground="White" CornerRadius="6" Padding="10,6"/>
+                    </Grid>
+                </Border>
+
+                <!-- Device list header -->
+                <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto,Auto,Auto" Margin="0,0,0,4">
+                    <TextBlock Grid.Column="0" Text="Device (Dictionary O(1) lookup)" FontSize="12" FontWeight="Bold" Foreground="#8B92A9"/>
+                    <TextBlock Grid.Column="1" Text="Category" FontSize="12" FontWeight="Bold" Foreground="#8B92A9" Width="130"/>
+                    <TextBlock Grid.Column="2" Text="Value"    FontSize="12" FontWeight="Bold" Foreground="#8B92A9" Width="70"/>
+                    <TextBlock Grid.Column="3" Text="Unit"     FontSize="12" FontWeight="Bold" Foreground="#8B92A9" Width="50"/>
+                    <TextBlock Grid.Column="4" Text="State"    FontSize="12" FontWeight="Bold" Foreground="#8B92A9" Width="80"/>
+                </Grid>
+
+                <!-- Device rows -->
+                <Border Grid.Row="2" Background="#111827" CornerRadius="8" Padding="4">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding Devices}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Padding="10,6" Margin="0,1" CornerRadius="4"
+                                            Background="#111827">
+                                        <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto">
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{Binding NodeId}" Foreground="White" FontSize="12" FontWeight="Bold"/>
+                                                <TextBlock Text="{Binding Mac}" Foreground="#6b7280" FontSize="10"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="{Binding Category}" Foreground="#a78bfa" FontSize="12" Width="130" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding LastValue, StringFormat='{}{0:F1}'}" Foreground="White" FontSize="13" FontWeight="Bold" Width="70" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="3" Text="{Binding Unit}" Foreground="#9ca3af" FontSize="11" Width="50" VerticalAlignment="Center"/>
+                                            <Border Grid.Column="4" Width="75" CornerRadius="4" Padding="4,2" VerticalAlignment="Center"
+                                                    Background="{Binding IsAnomaly, Converter={StaticResource AnomalyColorConverter}}">
+                                                <TextBlock Text="{Binding IsAnomaly, StringFormat={}{0}}"
+                                                           Foreground="White" FontSize="10" FontWeight="Bold"
+                                                           HorizontalAlignment="Center"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Border>
+
+                <!-- ── Issue Command form ── -->
+                <Border Grid.Row="3" Background="#1a1a2e" CornerRadius="8" Padding="12" Margin="0,8,0,0">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="⚙ Issue Manual Override Command" FontSize="13" FontWeight="Bold" Foreground="White"/>
+                        <Grid ColumnDefinitions="*,*">
+                            <TextBox Grid.Column="0" Text="{Binding TargetDeviceId}"
+                                     Watermark="Target Device ID / MAC…"
+                                     Background="#252542" Foreground="White" CornerRadius="6" Padding="8,6" Margin="0,0,6,0"/>
+                            <ComboBox Grid.Column="1" SelectedItem="{Binding CommandType}"
+                                      Background="#252542" Foreground="White" CornerRadius="6">
+                                <ComboBoxItem>ManualOverride</ComboBoxItem>
+                                <ComboBoxItem>TriggerActuator</ComboBoxItem>
+                                <ComboBoxItem>ShutdownDevice</ComboBoxItem>
+                                <ComboBoxItem>RestartDevice</ComboBoxItem>
+                                <ComboBoxItem>AdjustThreshold</ComboBoxItem>
+                            </ComboBox>
+                        </Grid>
+                        <TextBox Text="{Binding CommandPayload}"
+                                 Watermark="Payload / parameters (optional)…"
+                                 Background="#252542" Foreground="White" CornerRadius="6" Padding="8,6"/>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Button Grid.Column="0" Content="▶ Send Command" Command="{Binding SendCommandCommand}"
+                                    Background="#10b981" Foreground="White" CornerRadius="6" Padding="12,8" Margin="0,0,8,0"
+                                    HorizontalAlignment="Stretch"/>
+                            <Button Grid.Column="1" Content="↩ Undo Last" Command="{Binding UndoCommandCommand}"
+                                    Background="#f59e0b" Foreground="White" CornerRadius="6" Padding="12,8"/>
+                        </Grid>
+                        <TextBlock Text="{Binding UndoResult}" Foreground="#86efac" FontSize="11"
+                                   IsVisible="{Binding UndoResult, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- ─────────────────────────────────────────────────────
+                 RIGHT PANEL — Stack history + HashSet alerts + Predictions
+                 ───────────────────────────────────────────────────── -->
+            <Grid Grid.Column="2" RowDefinitions="Auto,170,Auto,170,Auto,*">
+
+                <!-- Command history (Stack<T>) -->
+                <TextBlock Grid.Row="0" Text="📋 Command History (Stack)" FontSize="13"
+                           FontWeight="Bold" Foreground="#86efac" Margin="0,0,0,6"/>
+                <Border Grid.Row="1" Background="#0d1f12" CornerRadius="8" Padding="8" Margin="0,0,0,10">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding CommandHistory}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="#162a1c" CornerRadius="6" Padding="8" Margin="0,0,0,4">
+                                        <StackPanel>
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock Grid.Column="0" Text="{Binding Type}" Foreground="#86efac" FontWeight="Bold" FontSize="11"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding Id}" Foreground="#4b5563" FontSize="10"/>
+                                            </Grid>
+                                            <TextBlock Text="{Binding DeviceId}" Foreground="#d1fae5" FontSize="10"/>
+                                            <TextBlock Text="{Binding IssuedAt}" Foreground="#6b7280" FontSize="9"/>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Border>
+
+                <!-- Active Alerts (HashSet<T>) -->
+                <TextBlock Grid.Row="2" Text="🚨 Active Alerts (HashSet — unique only)" FontSize="13"
+                           FontWeight="Bold" Foreground="#fdba74" Margin="0,0,0,6"/>
+                <Border Grid.Row="3" Background="#1c1004" CornerRadius="8" Padding="8" Margin="0,0,0,10">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding ActiveAlerts}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="#2d1a06" CornerRadius="6" Padding="8,6" Margin="0,0,0,3">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Grid.Column="0" Text="{Binding}" Foreground="#fdba74"
+                                                       FontSize="11" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                            <Button Grid.Column="1" Content="✓" FontSize="11"
+                                                    Command="{Binding $parent[UserControl].((vm:CommandStreamViewModel)DataContext).ResolveAlertCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Background="#15803d" Foreground="White" CornerRadius="4" Padding="6,2"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Border>
+
+                <!-- Predictive Insights -->
+                <TextBlock Grid.Row="4" Text="🤖 Automated Insights &amp; Suggestions" FontSize="13"
+                           FontWeight="Bold" Foreground="#c4b5fd" Margin="0,0,0,6"/>
+                <Border Grid.Row="5" Background="#130f1f" CornerRadius="8" Padding="8">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding Predictions}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border CornerRadius="8" Padding="10" Margin="0,0,0,6"
+                                            Background="#1e1533">
+                                        <StackPanel Spacing="4">
+                                            <TextBlock Text="{Binding Title}" FontWeight="Bold"
+                                                       Foreground="#c4b5fd" FontSize="12" TextWrapping="Wrap"/>
+                                            <Border Background="#7c3aed" CornerRadius="3" Padding="4,1" HorizontalAlignment="Left">
+                                                <TextBlock Text="{Binding InsightType}" Foreground="White" FontSize="9" FontWeight="Bold"/>
+                                            </Border>
+                                            <TextBlock Text="{Binding Description}" Foreground="#e9d5ff"
+                                                       FontSize="11" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Border>
+
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>

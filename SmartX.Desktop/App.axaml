@@ -1,0 +1,34 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="SmartX.Desktop.App"
+             xmlns:local="using:SmartX.Desktop"
+             xmlns:converters="using:SmartX.Desktop.Converters"
+             xmlns:views="using:SmartX.Desktop.Views"
+             xmlns:vm="using:SmartX.Desktop.ViewModels"
+             RequestedThemeVariant="Dark">
+
+    <Application.DataTemplates>
+        <local:ViewLocator/>
+        <DataTemplate DataType="{x:Type vm:HeatmapViewModel}">
+            <views:HeatmapView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:CommandStreamViewModel}">
+            <views:CommandStreamView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:TopologyViewModel}">
+            <views:TopologyView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:RegistryViewModel}">
+            <views:RegistryView />
+        </DataTemplate>
+    </Application.DataTemplates>
+
+    <Application.Resources>
+        <converters:AnomalyColorConverter  x:Key="AnomalyColorConverter"/>
+        <converters:NavColorConverter      x:Key="NavColorConverter"/>
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+    </Application.Styles>
+</Application>

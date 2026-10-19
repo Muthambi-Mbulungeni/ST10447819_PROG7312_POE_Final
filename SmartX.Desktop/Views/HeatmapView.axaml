@@ -1,0 +1,60 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:SmartX.Desktop.ViewModels"
+             xmlns:ctrl="using:SmartX.Desktop.Controls"
+             x:Class="SmartX.Desktop.Views.HeatmapView"
+             x:DataType="vm:HeatmapViewModel"
+             Background="#1a1a2e">
+
+    <StackPanel Margin="20">
+        <TextBlock Text="Live Telemetry Dash" FontSize="28" FontWeight="Bold" Foreground="White" Margin="0,0,0,5"/>
+        <TextBlock Text="Real-time sensor graphs updating dynamically." FontSize="14" Foreground="#8B92A9" Margin="0,0,0,25"/>
+
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Entries}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Width="260" Height="200" Margin="10" 
+                                CornerRadius="12" Padding="15"
+                                BoxShadow="0 4 15 0 #40000000"
+                                Background="{Binding IsAnomaly, Converter={StaticResource AnomalyColorConverter}}">
+                            <!-- Transitions for smooth color changes -->
+                            <Border.Transitions>
+                                <Transitions>
+                                    <BrushTransition Property="Background" Duration="0:0:0.3"/>
+                                </Transitions>
+                            </Border.Transitions>
+
+                            <Grid RowDefinitions="Auto,*,Auto,Auto">
+                                <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                                    <TextBlock Grid.Column="0" Text="{Binding NodeId}" FontWeight="Bold" Foreground="White" FontSize="16"/>
+                                    <Border Grid.Column="1" Background="#40FFFFFF" CornerRadius="4" Padding="6,2">
+                                        <TextBlock Text="{Binding Status}" Foreground="White" FontWeight="Bold" FontSize="11" />
+                                    </Border>
+                                </Grid>
+
+                                <!-- The dynamic scrolling graph! -->
+                                <ctrl:MiniGraph Grid.Row="1" Margin="0,15,0,15"
+                                                History="{Binding History}" 
+                                                LineBrush="White" />
+
+                                <TextBlock Grid.Row="2" Text="{Binding LastValue, StringFormat='Value: {0:F2}'}" 
+                                           Foreground="White" FontSize="18" FontWeight="SemiBold"/>
+                                
+                                <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,4,0,0">
+                                    <TextBlock Text="{Binding Zone}" Foreground="#E0E0E0" FontSize="12" Margin="0,0,10,0"/>
+                                    <TextBlock Text="{Binding Room}" Foreground="#E0E0E0" FontSize="12"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </StackPanel>
+</UserControl>
