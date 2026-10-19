@@ -190,4 +190,15 @@ public sealed class ApiClient
         var response = await _client.PostAsync("commands/simulate-alert", json);
         return response.IsSuccessStatusCode;
     }
+
+    /// <summary>
+    /// POST /api/devices/search — records a category/device search for pattern analysis.
+    /// </summary>
+    public async Task RecordSearchAsync(string category)
+    {
+        if (string.IsNullOrWhiteSpace(category)) return;
+        await _client.PostAsync(
+            $"devices/search?category={HttpUtility.UrlEncode(category)}",
+            new StringContent("{}", Encoding.UTF8, "application/json"));
+    }
 }

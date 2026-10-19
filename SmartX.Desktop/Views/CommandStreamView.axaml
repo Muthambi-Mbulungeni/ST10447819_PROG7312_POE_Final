@@ -135,7 +135,7 @@
                 <Border Grid.Row="0" Background="#1a1a2e" CornerRadius="8" Padding="10" Margin="0,0,0,8">
                     <Grid ColumnDefinitions="*,Auto,Auto,Auto">
                         <TextBox Grid.Column="0" Text="{Binding FilterCategory}"
-                                 Watermark="Search category, node ID, or MAC (e.g. PowerConsumption, NODE-Zone-A)…"
+                                 PlaceholderText="Search category, node ID, or MAC (e.g. PowerConsumption, NODE-Zone-A)…"
                                  Background="#252542" Foreground="White"
                                  CornerRadius="6" Padding="8,6" Margin="0,0,8,0"/>
                         <CheckBox Grid.Column="1" Content="Anomaly Only" IsChecked="{Binding ShowAnomalyOnly}"
@@ -217,7 +217,7 @@
 
                         <Grid ColumnDefinitions="*,*">
                             <TextBox Grid.Column="0" Text="{Binding TargetDeviceId}"
-                                     Watermark="Target Device ID / MAC…"
+                                     PlaceholderText="Target Device ID / MAC…"
                                      Background="#252542" Foreground="White" CornerRadius="6" Padding="8,6" Margin="0,0,6,0"/>
                             
                             <ComboBox Grid.Column="1"
@@ -228,7 +228,7 @@
                         </Grid>
 
                         <TextBox Text="{Binding CommandPayload}"
-                                 Watermark="Payload / parameter (e.g. TOGGLE_PUMP, THRESHOLD=85)…"
+                                 PlaceholderText="Payload / parameter (e.g. TOGGLE_PUMP, THRESHOLD=85)…"
                                  Background="#252542" Foreground="White" CornerRadius="6" Padding="8,6"/>
 
                         <Grid ColumnDefinitions="*,Auto">

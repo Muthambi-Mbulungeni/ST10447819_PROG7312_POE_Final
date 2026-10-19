@@ -23,10 +23,10 @@ public partial class MainViewModel : ViewModelBase
     private ViewModelBase _currentView;
 
     // Active tab indicators for highlighted nav buttons
-    public bool IsHeatmapActive       => _currentView is HeatmapViewModel;
-    public bool IsCommandStreamActive => _currentView is CommandStreamViewModel;
-    public bool IsTopologyActive      => _currentView is TopologyViewModel;
-    public bool IsRegistryActive      => _currentView is RegistryViewModel;
+    public bool IsHeatmapActive       => CurrentView is HeatmapViewModel;
+    public bool IsCommandStreamActive => CurrentView is CommandStreamViewModel;
+    public bool IsTopologyActive      => CurrentView is TopologyViewModel;
+    public bool IsRegistryActive      => CurrentView is RegistryViewModel;
 
     public MainViewModel()
     {
@@ -35,7 +35,7 @@ public partial class MainViewModel : ViewModelBase
         _topologyViewModel      = new TopologyViewModel(_api);
         _registryViewModel      = new RegistryViewModel(_api);
 
-        _currentView = _heatmapViewModel;
+        CurrentView = _heatmapViewModel;
     }
 
     [RelayCommand]
