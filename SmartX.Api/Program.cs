@@ -265,4 +265,4 @@ app.MapGet("/api/predictions", (CommandService svc) =>
     Results.Ok(svc.GetPredictions()))
     .WithTags("Part 2 – Predictions");
 
-app.Run();
+app.Run("http://*:5050");

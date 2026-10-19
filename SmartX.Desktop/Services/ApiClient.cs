@@ -16,7 +16,7 @@ namespace SmartX.Desktop.Services;
 public sealed class ApiClient
 {
     private readonly HttpClient _client;
-    private const string BaseUrl = "http://localhost:5050/api";
+    private const string BaseUrl = "http://127.0.0.1:5050/api";
 
     public ApiClient()
     {

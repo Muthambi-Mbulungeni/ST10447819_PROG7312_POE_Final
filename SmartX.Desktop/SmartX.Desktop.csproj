@@ -1,9 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Clear UsedAvaloniaProducts to prevent AvaloniaStatsTask from throwing on read-only environments -->
+    <UsedAvaloniaProducts></UsedAvaloniaProducts>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,4 +24,7 @@
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
   </ItemGroup>
+
+  <!-- Prevent build failure in sandboxed or read-only home directory environments -->
+  <Target Name="AvaloniaStats" />
 </Project>

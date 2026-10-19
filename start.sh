@@ -9,6 +9,10 @@ trap 'kill $API_PID 2>/dev/null; echo "System shut down."' EXIT
 # Resolve script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Disable telemetry to avoid read-only ~/.local permissions issues
+export AVALONIA_TELEMETRY_OPTOUT=1
+export DOTNET_CLI_TELEMETRY_OPTOUT=1
+
 # ── Ensure dotnet is available ─────────────────────────────────────────────
 if ! command -v dotnet &> /dev/null; then
     # Check common user & system install locations
@@ -51,6 +55,16 @@ if ! dotnet --list-runtimes 2>/dev/null | grep -q "Microsoft.AspNetCore.App"; th
     exit 1
 fi
 
+# ── Build Solution ─────────────────────────────────────────────────────────
+echo ""
+echo "Building Smart-X Solution..."
+dotnet build "$SCRIPT_DIR/SmartX.sln" --nologo -v q
+if [ $? -ne 0 ]; then
+    echo "❌ Build failed. Please check the compilation errors above."
+    exit 1
+fi
+echo "✔ Build succeeded."
+
 # ── Step 1: Start the Backend API ──────────────────────────────────────────
 echo ""
 echo "[1/2] Starting Backend API..."
@@ -61,20 +75,35 @@ echo "                        /api/commands/undo, /api/commands/history,"
 echo "                        /api/alerts/active, /api/devices, /api/predictions"
 echo ""
 
+export ASPNETCORE_URLS="http://*:5050"
 cd "$SCRIPT_DIR/SmartX.Api"
-dotnet run &
+dotnet run --no-build --urls "http://*:5050" &
 API_PID=$!
 
-# Wait for the API to boot and verify
-sleep 4
+# Wait dynamically for the API to boot and respond
+echo "      Waiting for API to be ready at http://127.0.0.1:5050..."
+READY=0
+for i in {1..25}; do
+    if curl -s -f http://127.0.0.1:5050/api/commands/stream &>/dev/null; then
+        READY=1
+        echo "✔ API is online and responding."
+        break
+    fi
+    sleep 0.5
+done
+
+if [ $READY -eq 0 ]; then
+    echo "⚠️ Warning: API did not respond within 12 seconds. Attempting to start Desktop client anyway..."
+fi
 
 # ── Step 2: Start the Avalonia Desktop Client ──────────────────────────────
+echo ""
 echo "[2/2] Starting Avalonia Desktop Client..."
 echo "      Navigate to 'Command Stream' in the nav bar for Part 2 features."
 echo ""
 
 cd "$SCRIPT_DIR/SmartX.Desktop"
-dotnet run
+dotnet run --no-build
 
 echo ""
 echo "Desktop client closed. Shutting down API..."
