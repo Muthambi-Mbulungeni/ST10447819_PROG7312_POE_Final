@@ -139,33 +139,53 @@ public partial class CommandStreamViewModel : ViewModelBase
     private async Task SendCommandAsync()
     {
         if (string.IsNullOrWhiteSpace(TargetDeviceId)) return;
-
-        var result = await _api.SendCommandAsync(TargetDeviceId, CommandType, CommandPayload);
-        if (result is not null)
+        try
         {
-            StatusMessage  = $"✅ Command {result.Id} issued to {result.DeviceId}";
-            CommandPayload = string.Empty;
+            var result = await _api.SendCommandAsync(TargetDeviceId, CommandType, CommandPayload);
+            if (result is not null)
+            {
+                StatusMessage  = $"✅ Command {result.Id} issued to {result.DeviceId}";
+                CommandPayload = string.Empty;
+            }
+            await RefreshAllAsync();
         }
-        await RefreshAllAsync();
+        catch (Exception ex)
+        {
+            StatusMessage = $"API offline: {ex.Message}";
+        }
     }
 
     /// <summary>Undoes the last command → API pops from Stack.</summary>
     [RelayCommand]
     private async Task UndoCommandAsync()
     {
-        UndoResult = await _api.UndoLastCommandAsync();
-        StatusMessage = $"↩ {UndoResult}";
-        await RefreshAllAsync();
+        try
+        {
+            UndoResult = await _api.UndoLastCommandAsync();
+            StatusMessage = $"↩ {UndoResult}";
+            await RefreshAllAsync();
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"API offline: {ex.Message}";
+        }
     }
 
     /// <summary>Simulates an immediate critical alert to demonstrate PriorityQueue bypass.</summary>
     [RelayCommand]
     private async Task SimulateCriticalAlertAsync()
     {
-        var target = string.IsNullOrWhiteSpace(TargetDeviceId) ? "AA:BB:CC:DD:00:00" : TargetDeviceId;
-        await _api.SimulateAlertAsync(target, 4850.0f, "SPIKE", "PowerConsumption");
-        StatusMessage = $"⚡ Simulated Priority-0 alert on {target}!";
-        await RefreshAllAsync();
+        try
+        {
+            var target = string.IsNullOrWhiteSpace(TargetDeviceId) ? "AA:BB:CC:DD:00:00" : TargetDeviceId;
+            await _api.SimulateAlertAsync(target, 4850.0f, "SPIKE", "PowerConsumption");
+            StatusMessage = $"⚡ Simulated Priority-0 alert on {target}!";
+            await RefreshAllAsync();
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"API offline: {ex.Message}";
+        }
     }
 
     /// <summary>Selects a device from the list to populate the command form.</summary>
@@ -193,10 +213,17 @@ public partial class CommandStreamViewModel : ViewModelBase
     [RelayCommand]
     private async Task ApplyFilterAsync()
     {
-        if (!string.IsNullOrWhiteSpace(FilterCategory))
-            await _api.RecordSearchAsync(FilterCategory);
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(FilterCategory))
+                await _api.RecordSearchAsync(FilterCategory);
 
-        await LoadDevicesAsync();
+            await LoadDevicesAsync();
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"API offline: {ex.Message}";
+        }
     }
 
     /// <summary>Clears active filter and reloads all devices.</summary>
@@ -205,7 +232,14 @@ public partial class CommandStreamViewModel : ViewModelBase
     {
         FilterCategory  = string.Empty;
         ShowAnomalyOnly = false;
-        await LoadDevicesAsync();
+        try
+        {
+            await LoadDevicesAsync();
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"API offline: {ex.Message}";
+        }
     }
 
     /// <summary>Resolves (removes) a specific alert from the HashSet.</summary>
@@ -213,19 +247,30 @@ public partial class CommandStreamViewModel : ViewModelBase
     private async Task ResolveAlertAsync(string alertKey)
     {
         if (string.IsNullOrWhiteSpace(alertKey)) return;
-        await _api.ResolveAlertAsync(alertKey);
-        await RefreshAllAsync();
+        try
+        {
+            await _api.ResolveAlertAsync(alertKey);
+            await RefreshAllAsync();
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"API offline: {ex.Message}";
+        }
     }
 
     // ── Helpers ────────────────────────────────────────────────
 
     private async Task LoadDevicesAsync()
     {
-        var query      = string.IsNullOrWhiteSpace(FilterCategory) ? null : FilterCategory;
-        bool? anomOnly = ShowAnomalyOnly ? true : null;
-        var list       = await _api.GetDevicesAsync(query, anomOnly);
+        try
+        {
+            var query      = string.IsNullOrWhiteSpace(FilterCategory) ? null : FilterCategory;
+            bool? anomOnly = ShowAnomalyOnly ? true : null;
+            var list       = await _api.GetDevicesAsync(query, anomOnly);
 
-        Devices.Clear();
-        foreach (var d in list) Devices.Add(d);
+            Devices.Clear();
+            foreach (var d in list) Devices.Add(d);
+        }
+        catch { /* handled by polling loop */ }
     }
 }

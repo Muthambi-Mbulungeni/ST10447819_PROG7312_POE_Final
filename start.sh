@@ -40,6 +40,17 @@ fi
 DOTNET_VER=$(dotnet --version 2>/dev/null)
 echo "✔ Using .NET SDK version: $DOTNET_VER"
 
+# ── Ensure ASP.NET Core runtime is available ───────────────────────────────
+if ! dotnet --list-runtimes 2>/dev/null | grep -q "Microsoft.AspNetCore.App"; then
+    echo ""
+    echo "❌ Error: ASP.NET Core runtime ('Microsoft.AspNetCore.App') is missing."
+    echo "   The Web API backend requires the ASP.NET Core shared framework."
+    echo "   Install it on your system (Garuda / Arch Linux):"
+    echo "      sudo pacman -S aspnet-runtime-8.0"
+    echo ""
+    exit 1
+fi
+
 # ── Step 1: Start the Backend API ──────────────────────────────────────────
 echo ""
 echo "[1/2] Starting Backend API..."
