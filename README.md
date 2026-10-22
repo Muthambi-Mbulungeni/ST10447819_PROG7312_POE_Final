@@ -1,8 +1,7 @@
 # Smart-X Mesh Ecosystem — POE Part 2
 
 **Student:** ST10447819  
-**Module:** PROG7312 — 2026  
-**YouTube Demo:** *(add your unlisted/public video link here prior to submission)*  
+**Module:** PROG7312 — 2026   
 **GitHub Repository:** https://github.com/EMGPRS/prog7312-2026-prog7312-part-1-muthambi-mbulungeni-main  
 
 ---
@@ -163,16 +162,3 @@ curl -X POST http://localhost:5050/api/commands/undo
 1. Multiple spikes hitting the same node will not produce duplicate alert items in the **Active Alerts** list.
 2. Click **Resolve** next to an alert to remove it from the `HashSet<T>` via `POST /api/alerts/resolve/{alertKey}`.
 
----
-
-## 6. Video Demo Checklist for Marking
-
-When recording your presentation, demonstrate each of the following pillars:
-
-1. **Navigation Menu:** Switch between *Sensor Telemetry (Part 1)* and *Command Stream (Part 2)* to prove state is preserved.
-2. **Priority Queue & Standard Queue:** Highlight the standard FIFO queue incrementing and trigger **Simulate Spike** to show the PriorityQueue bypass.
-3. **Command Stack (Undo):** Dispatch a command, point out the Stack count incrementing, and click **Undo Last** to demonstrate LIFO pop.
-4. **Dictionary Lookups:** Search for devices by category/node ID and show the instant response.
-5. **SortedDictionary Timeline:** Point out the live timeline graph maintaining chronological order.
-6. **HashSet Deduplication:** Show that repeated spikes on the same device maintain a single unique alert card.
-7. **Predictive Action Engine:** Show how the automated insights adapt to anomalies and search patterns.
