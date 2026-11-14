@@ -30,3 +30,6 @@ uploads/
 Thumbs.db
 project_context.txt
 uploads/
+.~lock.*
+project_context.txt
+uploads/
