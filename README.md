@@ -1,164 +1,126 @@
-# Smart-X Mesh Ecosystem — POE Part 2
+# Smart-X Mesh Ecosystem — POE Part 3 (Final Full Functioning App)
 
-**Student:** ST10447819  
-**Module:** PROG7312 — 2026   
-**GitHub Repository:** https://github.com/EMGPRS/prog7312-2026-prog7312-part-1-muthambi-mbulungeni-main  
+**Student Name:** Muthambi Mbulungeni  
+**Student Identifier:** ST10447819  
+**Course Module:** PROG7312 — Advanced Programming (2026)  
+**Target Milestone:** Portfolio of Evidence (PoE) Part 3 (100 Marks)  
+**GitHub Repository:** https://github.com/EMGPRS/prog7312-2026-prog7312-part-2-muthambi-mbulungeni.git  
 
 ---
 
 ## 1. System Overview
 
-The **Smart-X Mesh Ecosystem** is a high-performance IoT telemetry ingestion and real-time command processing platform built with:
+The **Smart-X Mesh Ecosystem** is an enterprise-grade industrial IoT platform designed to monitor, orchestrate, and optimize distributed fleets of ESP32 microcontrollers across mission-critical facilities. 
 
-| Component | Technology | Architecture & Role |
-|---|---|---|
-| **Backend API** | ASP.NET Core 8 Minimal API | High-throughput ingestion queues, priority dispatching, undo command stack, and automated recommendation engine. |
-| **Desktop Client** | Avalonia UI (Cross-platform XAML/C#) | Hardware-accelerated telemetry dashboards, live sparkline graphs, device management, and real-time command dispatching. |
-| **Containerisation** | Docker & Docker Compose | Containerised API environment for automated grading and reproducible deployment. |
+The system incorporates advanced data structures across three interconnected architectural pillars:
+1. **Pillar 1: Sensor Data Ingestion & Telemetry:** Generic packet processing (`where T : struct`), memory-efficient jagged arrays (`float[]?[]`), operator overloading, recursive deployment tree validation, and thread-safe ingestion queues.
+2. **Pillar 2: Real-Time Command Stream & History:** Standard FIFO queues (`Queue<T>`), critical alert bypass (`PriorityQueue<T, int>`), reversible command undo stack (`Stack<T>`), single source of truth device directory (`Dictionary<string, DeviceState>`), chronologically ordered historical timeline (`SortedDictionary<DateTime, List<ReadingEntry>>`), dual deduplicating sets (`HashSet<string>` for alerts and disconnected nodes), and a Markov-style learned follow-up prediction engine.
+3. **Pillar 3: Network Topology & Mesh Routing (Final PoE Phase):** Physical wireless mesh modeling using an undirected weighted `MeshGraph`, custom self-balancing `AVLTree<TKey, TValue>` for logarithmic $O(\log N + K)$ historical timestamp range querying, custom binary `MinHeap<TElement, TPriority>`, **Breadth-First Search (BFS)** for subnet reachability, **Depth-First Search (DFS)** for cycle exploration, **Prim's Algorithm** for power-optimal Minimum Spanning Tree (MST) computation, and dynamic **self-healing** routing failover.
 
 ---
 
 ## 2. Quick Start & Execution
 
-### Option A: Local Execution (Recommended for Desktop UI)
-Ensure the .NET 8 SDK is installed on your system.
+### Prerequisites
+- .NET 8.0 SDK or .NET 10.0 SDK installed.
+- (Optional) Docker & Docker Compose for containerized deployment.
 
+### Option A: Local Execution (API + Dual Web & Desktop Clients)
 ```bash
+# Make the startup script executable and launch
 chmod +x start.sh
 ./start.sh
 ```
 
-- **Backend API & Swagger:** http://localhost:5050/swagger  
-- **Desktop Client:** Automatically launches connected to `http://localhost:5050/api`
+- **Backend Web API & Swagger UI:** http://localhost:5050/swagger  
+- **Interactive 3-Pillar Web Dashboard:** http://localhost:5050  
+- **Avalonia Cross-Platform Desktop Client:** Automatically launches connected to `http://localhost:5050/api`
 
-### Option B: Docker Compose (Backend API)
-Run the backend in an isolated Docker container:
-
+### Option B: Docker Compose (Backend API Container)
 ```bash
 docker compose up --build
 ```
+The API boots in an isolated container mapped to `http://localhost:5050`.
+
+### Option C: Automated Unit Test Suite
+```bash
+dotnet test
+```
+Executes all 12 automated unit tests across Parts 1, 2, and 3, verifying queue priority rules, capacity eviction, stack undo, single source of truth, dual hash sets, AVL tree balancing, MinHeap extraction, BFS/DFS traversal, and Prim's MST.
 
 ---
 
-## 3. Part 1 Foundations (Maintained & Integrated)
+## 3. Data Structure Asymptotic Complexity Analysis
 
-All foundational OOP and algorithmic requirements from Part 1 remain fully active:
-
-- **Generic Constraints (`TelemetryPacket<T>`):** Constrained `where T : struct` to eliminate boxing/unboxing overhead for primitive telemetry.
-- **Operator Overloading (`SensorReading`):** Implements `+`, `-`, `>`, `<`, `>=`, `<=` for structural comparisons and sensor delta aggregation.
-- **Jagged Arrays (`BatchBuffer`):** Utilises `float[]?[]` as a memory-efficient staging pipeline before packets enter queues.
-- **Method Overloading (`TelemetryStore.Ingest`):** Single-reading ingestion vs. high-throughput batch ingestion overloads.
-- **Recursive Network Validation (`DeploymentValidator.Walk`):** Depth-first recursive tree traversal over `Facility > Zone > Sub-Zone > Device`.
-- **Thread-Safe Ingestion Queue (`IngestionQueue<T>`):** Mutex-synchronised circular buffer backed by a `LinkedList<T>`.
-
----
-
-## 4. Part 2 Core Requirements & Data Structures (100 Marks)
-
-### Pillar 1: Navigation & State Preservation (30 Marks)
-- Updated frontend navigation presenting all required active modules:
-  1. **Sensor Data Ingestion & Telemetry** (Part 1 Live Heatmap)
-  2. **Real-Time Command Stream & History** (Part 2 Command Engine)
-  3. **Network Topology & Mesh Routing** (Part 3 PoE Final Preview)
-  4. **Sensor Registry** (Hardware & Encrypted Firmware)
-- **Seamless State Preservation:** The `MainViewModel` caches and coordinates ViewModel instances so switching between views retains search filters, selected items, active inputs, and undo history without freezing or state loss.
+| Data Structure | Implementation File | Role & Purpose in Ecosystem | Search / Query | Insertion | Deletion | Space |
+|---|---|---|---|---|---|---|
+| **`AVLTree<TKey, TValue>`** | `SmartX.Api/Domain/AVLTree.cs` | **Self-Balancing BST:** Stores historical timestamped telemetry. Executes range queries (`QueryRange(from, to)`) via subtree pruning without scanning unorganized lists. | $O(\log N + K)$ | $O(\log N)$ | $O(\log N)$ | $O(N)$ |
+| **`MinHeap<TElement, TPriority>`** | `SmartX.Api/Domain/MinHeap.cs` | **Binary Min-Heap:** Powers Prim's MST algorithm and Dijkstra shortest-path calculations with $O(1)$ minimum peek. | $O(1)$ (peek) | $O(\log V)$ | $O(\log V)$ | $O(V)$ |
+| **`MeshGraph`** | `SmartX.Api/Domain/MeshGraph.cs` | **Weighted Mesh Graph:** Models physical ESP32 nodes (vertices) and wireless links (edges) with BFS, DFS, Prim's MST, and self-healing failover. | BFS: $O(V + E)$<br>DFS: $O(V + E)$ | $O(1)$ (vertex)<br>$O(1)$ (edge) | $O(E)$ | $O(V + E)$ |
+| **`PriorityQueue<T, int>`** | `SmartX.Api/Domain/TelemetryProcessingQueue.cs` | **Critical Alert Lane:** Urgent sensor spikes bypass the standard queue and are dequeued before normal telemetry. | $O(1)$ (peek) | $O(\log N)$ | $O(\log N)$ | $O(N)$ |
+| **`Queue<T>`** | `SmartX.Api/Domain/TelemetryProcessingQueue.cs` | **Standard Ingestion Queue:** Bounded FIFO queue for routine telemetry; evicts oldest packet when full. | $O(1)$ (peek) | $O(1)$ | $O(1)$ | $O(N)$ |
+| **`Stack<T>`** | `SmartX.Api/Domain/CommandStack.cs` | **Undo Command History:** LIFO storage for operator overrides enabling non-crashing 1-click Undo. | $O(1)$ (peek) | $O(1)$ | $O(1)$ | $O(N)$ |
+| **`Dictionary<K, V>`** | `SmartX.Api/Domain/DeviceDirectory.cs` | **O(1) Device Registry:** Single source of truth for device hardware profiles and live states keyed by MAC. | $O(1)$ | $O(1)$ | $O(1)$ | $O(N)$ |
+| **`SortedDictionary<K, V>`** | `SmartX.Api/Domain/DeviceDirectory.cs` | **Sequential Timeline:** Chronological ordering by `DateTime` for simultaneous identical timestamp grouping. | $O(\log N)$ | $O(\log N)$ | $O(\log N)$ | $O(N)$ |
+| **`HashSet<T>`** | `SmartX.Api/Domain/AlertTracker.cs` | **Dual Sets:** Set 1 deduplicates active alerts; Set 2 deduplicates disconnected hardware nodes. | $O(1)$ | $O(1)$ | $O(1)$ | $O(N)$ |
 
 ---
 
-### Pillar 2: Real-Time Command Stream & Advanced Collections (40 Marks)
+## 4. Verification & Testing Guide
 
-| Data Structure | Implementation File | Role in the Ecosystem |
-|---|---|---|
-| **`Queue<T>`** | `SmartX.Api/Domain/TelemetryProcessingQueue.cs` | **FIFO Telemetry Queue:** Standard First-In-First-Out message queue processing routine telemetry packets arriving from devices. |
-| **`PriorityQueue<T, int>`** | `SmartX.Api/Domain/TelemetryProcessingQueue.cs` | **Critical Alert Bypass:** Urgent sensor anomalies (e.g., severe power spikes, moisture loss) are assigned priority `0` and bypass the standard queue to be processed and surfaced immediately. |
-| **`Stack<T>`** | `SmartX.Api/Domain/CommandStack.cs` | **Undo Command History:** Manages operator override commands (LIFO). Enables operators to quickly revert the last issued command (e.g. undoing an accidental shutdown). |
-| **`Dictionary<TKey, TValue>`** | `SmartX.Api/Domain/DeviceDirectory.cs` | **O(1) Device Lookups:** Keyed by normalized MAC address for instantaneous constant-time device retrieval and updates when telemetry packets arrive. |
-| **`SortedDictionary<TKey, TValue>`** | `SmartX.Api/Domain/DeviceDirectory.cs` | **Sequential Historical Timeline:** Stores historical logs ordered strictly by timestamp (`DateTime`). Enables the frontend to render live timeline graphs efficiently without sorting overhead. |
-| **`HashSet<T>`** | `SmartX.Api/Domain/AlertTracker.cs` | **Deduplicated Alert Set:** Tracks active unique error states. Because sets only store unique elements, duplicate alerts from high-frequency sensor spikes are suppressed automatically. |
+### A. Testing Historical Telemetry Range Querying (AVL Tree $O(\log N + K)$)
+1. Open the Desktop app (or Web Dashboard at `http://localhost:5050`).
+2. Navigate to **Network Topology & Mesh Routing (Pillar 3)**.
+3. Click **"🌲 Query AVL Tree (Historical)"**.
+4. Observe:
+   - The self-balancing AVL Tree queries timestamped telemetry within the specified window in logarithmic time by pruning out-of-range subtrees.
+   - Retaining multiple readings at identical timestamps without data loss.
 
----
+### B. Testing Prim's Minimum Spanning Tree (MST) & Power Optimization
+1. In the **Network Topology** view, click **"⚡ Compute Prim's MST"**.
+2. Observe:
+   - Prim's algorithm backed by the custom `MinHeap` computes the global power-optimal backbone spanning all $V$ nodes across $V - 1$ wireless links.
+   - Total transmission weight is minimized, preventing packet collisions and extending battery longevity.
 
-### Pillar 3: Predictive Action & Recommendation Engine (30 Marks)
-
-- **Class:** `SmartX.Api/Services/PredictionEngine.cs`
-- **Pattern Analysis:** Tracks search history, category query frequencies, and anomaly-to-command correlations (e.g., detecting what commands operators typically trigger when power anomalies occur).
-- **Automated Insights:** Automatically produces ranked recommendations on the dashboard:
-  - *Pattern Matches:* Predicts and suggests commands based on previous manual overrides.
-  - *Monitoring Insights:* Highlights frequently searched categories that warrant proactive threshold alerts.
-  - *Unresolved Alert Remediations:* Proactively recommends target commands for active `HashSet` alerts.
-  - *Burst Warnings:* Detects runaway command bursts (>3 commands within 30 seconds) to prevent equipment damage.
-
----
-
-## 5. Verification & Testing Instructions
-
-### A. Simulating a High-Priority Critical Alert (PriorityQueue Bypass)
-
-#### Via the Avalonia Desktop UI:
-1. Open the **Command Stream** tab.
-2. Click the red **"⚡ Simulate Spike"** button in the header bar.
+### C. Testing Dynamic Mesh Self-Healing ("Holding Hands" Analogy)
+1. In the **Network Topology** view, click **"🚨 Simulate Node Failover (Self-Healing)"**.
+2. Repeater Alpha (`ESP:AA:01:02:03:04`) is marked offline.
 3. Observe:
-   - The **PRIORITY QUEUE** counter increments immediately.
-   - The packet appears at the top of the **PriorityQueue (Critical Alerts)** feed in red.
-   - The alert is tracked in the **HashSet** without duplicate warnings.
-   - The **Automated Insights** panel suggests immediate remediation commands.
+   - The network dynamically reroutes telemetry around the failed node through redundant cross-zone repeaters.
+   - Disconnected nodes are tracked in the secondary `HashSet<string>`.
+4. Click **"🔄 Restore Node"** to reconnect Repeater Alpha and verify route re-establishment.
 
-#### Via cURL / Terminal:
-```bash
-curl -X POST http://localhost:5050/api/commands/simulate-alert \
-  -H "Content-Type: application/json" \
-  -d '{"deviceId":"AA:BB:CC:DD:00:00","value":4800.0,"unit":"W","category":"PowerConsumption"}'
-```
+### D. Testing PriorityQueue Critical Bypass & Capacity Rule
+1. Under **Real Time Command Stream (Pillar 2)**, click **"⚡ Simulate Spike"**.
+2. Observe:
+   - High-priority alert immediately emerges before routine packets.
+   - Run `dotnet test --filter Part2VerificationTests` to verify automated proof of priority order and queue eviction rules.
 
-#### Via Ingest Endpoint:
-```bash
-curl -X POST http://localhost:5050/api/telemetry/ingest \
-  -H "Content-Type: application/json" \
-  -d '{"deviceId":"AA:BB:CC:DD:00:00","value":9999.0,"unit":"W"}'
-```
+### E. Testing Learned Follow-Up Prediction Engine
+1. In the search box, search for `PowerConsumption`.
+2. Issue a manual override command.
+3. Observe that the engine records the transition and calculates confidence:
+   $$\text{Confidence} = \frac{\text{Count}(\text{Search } \to \text{ Command } X)}{\sum \text{Count}(\text{Search } \to \text{ All Commands})} \times 100\%$$
+4. Check the **Learned Actions** panel showing: *"Operators searching for 'PowerConsumption' subsequently issued 'ManualOverride' with 85% confidence."*
 
 ---
 
-### B. Testing the Command Stack & Undo (LIFO)
+## 5. Summary of Formative Feedback Resolutions
 
-#### Via the Avalonia Desktop UI:
-1. Under **Issue Manual Override Command**, select a device or click **Select** next to any device in the list.
-2. Select a command type (e.g. `ShutdownDevice`), add a payload (e.g. `VALVES_OFF`), and click **Send Command**.
-3. Confirm the command appears at the top of the **Stack History** panel on the right.
-4. Click **↩ Undo Last**.
-5. The command is popped from the `Stack<T>` and the UI shows: `Command [ID] reversed.`
-
-#### Via cURL:
-```bash
-# 1. Send command
-curl -X POST http://localhost:5050/api/commands/send \
-  -H "Content-Type: application/json" \
-  -d '{"deviceId":"AA:BB:CC:DD:00:00","commandType":"ShutdownDevice","payload":"EMERGENCY_SHUTDOWN"}'
-
-# 2. Inspect Stack history
-curl -X GET http://localhost:5050/api/commands/history
-
-# 3. Undo the command
-curl -X POST http://localhost:5050/api/commands/undo
-```
+All critique points from the Part 2 evaluation have been resolved and documented in [`docs/FEEDBACK_UPDATES_LOG.md`](file:///home/gaylordrobinson7000/Documents/PROG312/prog7312-2026-prog7312-part-2-muthambi-mbulungeni/docs/FEEDBACK_UPDATES_LOG.md):
+- **Removed Scratch Projects:** Completely removed `WpfTest`.
+- **Clear 3-Pillar UI:** Prominently presented Pillar 1, Pillar 2, and Pillar 3 across both Desktop and Web frontends with persistent state.
+- **Automated Proofs:** Added `SmartX.Tests` unit test suite proving priority lane behavior and capacity eviction.
+- **Single Source of Truth:** Consolidated device profiles and states into `DeviceDirectory`.
+- **Dual HashSets:** Added secondary set for disconnected nodes.
+- **Learned Prediction Engine:** Replaced search popularity list with Markov transition follow-ups and percentage confidence scoring.
 
 ---
 
-### C. Testing O(1) Dictionary Lookups & Multi-Field Search
-1. In the search box, enter a category (e.g. `PowerConsumption`), a Node ID (e.g. `NODE-Zone-A`), or a MAC address.
-2. Check the **Anomaly Only** checkbox to instantly filter for compromised nodes.
-3. Notice that searching trains the **Prediction Engine** in real time, increasing the search frequency metric for that category.
+## 6. Submission Deliverables
 
----
-
-### D. Testing the Chronological Timeline (SortedDictionary)
-1. In the **Command Stream** view, observe the **Chronological Timeline** section.
-2. The `MiniGraph` renders the sequence of historical values fetched directly from `GET /api/devices/timeline`.
-3. Because the API uses a `SortedDictionary<DateTime, List<ReadingEntry>>`, timestamps are intrinsically ordered without sorting delays.
-
----
-
-### E. Testing Alert Deduplication (HashSet)
-1. Multiple spikes hitting the same node will not produce duplicate alert items in the **Active Alerts** list.
-2. Click **Resolve** next to an alert to remove it from the `HashSet<T>` via `POST /api/alerts/resolve/{alertKey}`.
-
+1. **Source Code:** Complete functioning application suite on GitHub with over 50 atomic, conventional commits.
+2. **Implementation & Completion Report (DOCX):** [`docs/SmartX_Part3_Final_Comprehensive_Report.docx`](file:///home/gaylordrobinson7000/Documents/PROG312/prog7312-2026-prog7312-part-2-muthambi-mbulungeni/docs/SmartX_Part3_Final_Comprehensive_Report.docx).
+3. **Implementation & Completion Report (Markdown):** [`docs/PROJECT_COMPLETION_REPORT_PART3.md`](file:///home/gaylordrobinson7000/Documents/PROG312/prog7312-2026-prog7312-part-2-muthambi-mbulungeni/docs/PROJECT_COMPLETION_REPORT_PART3.md).
+4. **Lecturer Feedback Action Log:** [`docs/FEEDBACK_UPDATES_LOG.md`](file:///home/gaylordrobinson7000/Documents/PROG312/prog7312-2026-prog7312-part-2-muthambi-mbulungeni/docs/FEEDBACK_UPDATES_LOG.md).
+5. **Docker Deployment:** [`Dockerfile`](file:///home/gaylordrobinson7000/Documents/PROG312/prog7312-2026-prog7312-part-2-muthambi-mbulungeni/Dockerfile) and [`docker-compose.yml`](file:///home/gaylordrobinson7000/Documents/PROG312/prog7312-2026-prog7312-part-2-muthambi-mbulungeni/docker-compose.yml).
