@@ -15,13 +15,18 @@ namespace SmartX.Api.Domain;
 // ============================================================
 public sealed class AlertTracker
 {
-    // Case-insensitive so "node-001:ANOMALY" == "NODE-001:anomaly"
+    // Case-insensitive active alerts HashSet
     private readonly HashSet<string> _activeAlerts =
+        new(StringComparer.OrdinalIgnoreCase);
+
+    // SECOND HASHSET REQUIREMENT — Disconnected nodes tracking without duplicates
+    private readonly HashSet<string> _disconnectedNodes =
         new(StringComparer.OrdinalIgnoreCase);
 
     private readonly object _gate = new();
 
     public int Count { get { lock (_gate) return _activeAlerts.Count; } }
+    public int DisconnectedCount { get { lock (_gate) return _disconnectedNodes.Count; } }
 
     /// <summary>
     /// Adds an alert key. Returns true if the alert was new (not already tracked).
@@ -55,5 +60,42 @@ public sealed class AlertTracker
     {
         lock (_gate)
             return _activeAlerts.ToHashSet(StringComparer.OrdinalIgnoreCase);
+    }
+
+    // ── Second HashSet: Disconnected Nodes Tracking ────────────
+
+    /// <summary>
+    /// Marks a node as disconnected. Returns true if newly added, false if already in set (deduplicated).
+    /// </summary>
+    public bool MarkNodeDisconnected(string nodeIdOrMac)
+    {
+        if (string.IsNullOrWhiteSpace(nodeIdOrMac)) return false;
+        lock (_gate)
+            return _disconnectedNodes.Add(nodeIdOrMac.Trim());
+    }
+
+    /// <summary>
+    /// Restores/reconnects a node by removing it from the disconnected nodes set.
+    /// </summary>
+    public bool MarkNodeReconnected(string nodeIdOrMac)
+    {
+        if (string.IsNullOrWhiteSpace(nodeIdOrMac)) return false;
+        lock (_gate)
+            return _disconnectedNodes.Remove(nodeIdOrMac.Trim());
+    }
+
+    /// <summary>O(1) check if a given node is currently disconnected.</summary>
+    public bool IsNodeDisconnected(string nodeIdOrMac)
+    {
+        if (string.IsNullOrWhiteSpace(nodeIdOrMac)) return false;
+        lock (_gate)
+            return _disconnectedNodes.Contains(nodeIdOrMac.Trim());
+    }
+
+    /// <summary>Thread-safe snapshot of all unique disconnected node IDs.</summary>
+    public IReadOnlyCollection<string> GetAllDisconnectedNodes()
+    {
+        lock (_gate)
+            return _disconnectedNodes.ToHashSet(StringComparer.OrdinalIgnoreCase);
     }
 }

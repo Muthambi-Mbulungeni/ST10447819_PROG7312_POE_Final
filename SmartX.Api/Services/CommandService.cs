@@ -92,10 +92,15 @@ public sealed class CommandService
     /// <summary>Returns the full command history snapshot (most-recent first).</summary>
     public IReadOnlyList<CommandRecord> GetCommandHistory() => _history.Snapshot();
 
-    // ── Alert management (HashSet) ──────────────────────────────
+    // ── Alert management (Dual HashSet: Active Alerts & Disconnected Nodes) ──
 
     public bool ResolveAlert(string alertKey)            => _alerts.ResolveAlert(alertKey);
     public IReadOnlyCollection<string> GetActiveAlerts() => _alerts.GetAllActive();
+
+    public bool MarkNodeDisconnected(string nodeIdOrMac) => _alerts.MarkNodeDisconnected(nodeIdOrMac);
+    public bool MarkNodeReconnected(string nodeIdOrMac)  => _alerts.MarkNodeReconnected(nodeIdOrMac);
+    public bool IsNodeDisconnected(string nodeIdOrMac)   => _alerts.IsNodeDisconnected(nodeIdOrMac);
+    public IReadOnlyCollection<string> GetDisconnectedNodes() => _alerts.GetAllDisconnectedNodes();
 
     // ── Search recording + predictions ──────────────────────────
 

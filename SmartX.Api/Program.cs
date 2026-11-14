@@ -236,6 +236,23 @@ app.MapPost("/api/alerts/resolve/{alertKey}", (string alertKey, CommandService s
     return Results.Ok(new { AlertKey = alertKey, Resolved = resolved });
 }).WithTags("Part 2 – Alerts");
 
+// ── Disconnected Nodes (Second HashSet<T> snapshot & controls) ───────────
+app.MapGet("/api/alerts/disconnected", (CommandService svc) =>
+    Results.Ok(svc.GetDisconnectedNodes()))
+    .WithTags("Part 2 – Alerts");
+
+app.MapPost("/api/alerts/disconnect/{nodeId}", (string nodeId, CommandService svc) =>
+{
+    bool added = svc.MarkNodeDisconnected(nodeId);
+    return Results.Ok(new { NodeId = nodeId, IsDisconnected = true, NewlyAdded = added });
+}).WithTags("Part 2 – Alerts");
+
+app.MapPost("/api/alerts/reconnect/{nodeId}", (string nodeId, CommandService svc) =>
+{
+    bool removed = svc.MarkNodeReconnected(nodeId);
+    return Results.Ok(new { NodeId = nodeId, IsDisconnected = false, WasRemoved = removed });
+}).WithTags("Part 2 – Alerts");
+
 // ── Devices (Dictionary<K,V> lookup) ──────────────────────────────────────
 app.MapGet("/api/devices", (CommandService svc, string? category, bool? anomalyOnly) =>
 {
