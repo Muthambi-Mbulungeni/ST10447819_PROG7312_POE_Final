@@ -120,4 +120,6 @@ public sealed class CommandService
     public IReadOnlyList<DeviceState>   GetAnomalousDevices()                        => _directory.GetAnomalous();
     public IReadOnlyList<DeviceState>   SearchDevices(string? query, bool? anomOnly) => _directory.Search(query, anomOnly);
     public IReadOnlyList<TimelineEntry> GetTimeline(int n = 100)                     => _directory.GetTimeline(n);
+    public IReadOnlyList<TimelineEntry> QueryHistoricalRange(DateTime fromUtc, DateTime toUtc, string? filterNode = null)
+        => _directory.QueryHistoricalRange(fromUtc, toUtc, filterNode);
 }

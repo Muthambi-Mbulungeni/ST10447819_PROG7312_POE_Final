@@ -29,6 +29,9 @@ public sealed class DeviceDirectory
     // Chronologically ordered historical readings for timeline graphs
     private readonly SortedDictionary<DateTime, List<ReadingEntry>> _timeline = new();
 
+    // PART 3 AVL TREE: Generic self-balancing tree for logarithmic range querying O(log N + K)
+    private readonly AVLTree<DateTime, ReadingEntry> _historicalTree = new();
+
     private readonly object _gate = new();
 
     /// <summary>
@@ -55,7 +58,11 @@ public sealed class DeviceDirectory
                 _timeline[now] = list;
             }
 
-            list.Add(new ReadingEntry(mac, nodeId, lastValue, unit, isAnomaly));
+            var entry = new ReadingEntry(mac, nodeId, lastValue, unit, isAnomaly, now);
+            list.Add(entry);
+
+            // PART 3 AVL Tree insert — O(log N) self-balancing historical indexing
+            _historicalTree.Insert(now, entry);
 
             // Bound timeline to 1000 timestamp slots to prevent unbounded memory growth
             while (_timeline.Count > 1000)
@@ -188,6 +195,37 @@ public sealed class DeviceDirectory
                 .ToList();
         }
     }
+
+    // ── Part 3: Historical AVL Tree Range Querying (O(log N + K)) ──────────
+
+    /// <summary>
+    /// Queries historical timestamped telemetry within the [fromUtc, toUtc] interval
+    /// using the custom self-balancing AVL Tree. Achieves O(log N + K) speed by pruning out-of-range subtrees.
+    /// Optionally filters by MAC address or Node ID.
+    /// </summary>
+    public IReadOnlyList<TimelineEntry> QueryHistoricalRange(DateTime fromUtc, DateTime toUtc, string? filterNode = null)
+    {
+        lock (_gate)
+        {
+            var readings = _historicalTree.QueryRange(fromUtc, toUtc);
+            if (!string.IsNullOrWhiteSpace(filterNode))
+            {
+                var term = filterNode.Trim();
+                readings = readings.Where(r =>
+                    r.Mac.Equals(term, StringComparison.OrdinalIgnoreCase) ||
+                    r.NodeId.Equals(term, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+
+            return readings.Select(r => new TimelineEntry(
+                r.Timestamp != default ? r.Timestamp : fromUtc,
+                r.Mac,
+                r.NodeId,
+                r.Value,
+                r.Unit,
+                r.IsAnomaly
+            )).ToList();
+        }
+    }
 }
 
 // ── Supporting records ──────────────────────────────────────────────────────
@@ -202,11 +240,12 @@ public sealed record DeviceState(
     DateTime LastSeen);
 
 public sealed record ReadingEntry(
-    string Mac,
-    string NodeId,
-    float  Value,
-    string Unit,
-    bool   IsAnomaly);
+    string   Mac,
+    string   NodeId,
+    float    Value,
+    string   Unit,
+    bool     IsAnomaly,
+    DateTime Timestamp = default);
 
 public sealed record TimelineEntry(
     DateTime Timestamp,

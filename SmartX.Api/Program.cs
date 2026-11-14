@@ -17,6 +17,15 @@ builder.Services.AddSingleton(_ =>
 builder.Services.AddSingleton<PredictionEngine>();  // Pattern analysis engine
 builder.Services.AddSingleton<CommandService>();    // Stack, Queue, PriorityQueue, HashSet
 
+// Part 3 Singletons — MeshGraph and SmartXDataStructures container
+builder.Services.AddSingleton<MeshGraph>(sp =>
+{
+    var graph = new MeshGraph();
+    graph.SeedDefaultMeshNetwork();
+    return graph;
+});
+builder.Services.AddSingleton<SmartXDataStructures>();
+
 // Background telemetry generator (now also feeds Part 2 structures)
 builder.Services.AddHostedService<TelemetryGeneratorService>();
 
@@ -32,6 +41,8 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 app.UseCors();
+app.UseDefaultFiles();
+app.UseStaticFiles();
 app.UseSwagger();
 app.UseSwaggerUI(c =>
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "SmartX API v1"));
@@ -280,5 +291,86 @@ app.MapPost("/api/devices/search", (CommandService svc, string category) =>
 app.MapGet("/api/predictions", (CommandService svc) =>
     Results.Ok(svc.GetPredictions()))
     .WithTags("Part 2 – Predictions");
+
+// =============================================================================
+// PART 3 ENDPOINTS: Network Topology, Mesh Routing & Historical AVL Tree
+// =============================================================================
+
+// ── Graph Mesh Topology: Vertices and Edges ─────────────────────────────────
+app.MapGet("/api/topology/mesh", (MeshGraph graph) =>
+{
+    return Results.Ok(new
+    {
+        Nodes = graph.GetAllNodes(),
+        Edges = graph.GetAllEdges(),
+        NodeCount = graph.VertexCount,
+        EdgeCount = graph.EdgeCount
+    });
+}).WithTags("Part 3 – Network Topology");
+
+// ── Minimum Spanning Tree (Prim's Algorithm via MinHeap) ───────────────────
+app.MapGet("/api/topology/mst", (MeshGraph graph, string? startMac) =>
+{
+    var mst = graph.CalculateMinimumSpanningTree(startMac);
+    return Results.Ok(mst);
+}).WithTags("Part 3 – Network Topology");
+
+// ── Breadth-First Search (Subnet device reachability discovery) ─────────────
+app.MapGet("/api/topology/bfs", (MeshGraph graph, string? startMac, bool? onlineOnly) =>
+{
+    string start = startMac ?? "GW:00:11:22:33:44";
+    var order = graph.BreadthFirstSearch(start, onlineOnly ?? true);
+    return Results.Ok(new { StartNode = start, VisitedOrder = order, TotalVisited = order.Count });
+}).WithTags("Part 3 – Network Topology");
+
+// ── Depth-First Search (Cluster exploration & cycle detection) ──────────────
+app.MapGet("/api/topology/dfs", (MeshGraph graph, string? startMac, bool? onlineOnly) =>
+{
+    string start = startMac ?? "GW:00:11:22:33:44";
+    var order = graph.DepthFirstSearch(start, onlineOnly ?? true);
+    return Results.Ok(new { StartNode = start, VisitedOrder = order, TotalVisited = order.Count });
+}).WithTags("Part 3 – Network Topology");
+
+// ── Power-Optimal Multi-Hop Route (Dijkstra via MinHeap) ───────────────────
+app.MapPost("/api/topology/route", (RouteRequest req, MeshGraph graph) =>
+{
+    if (string.IsNullOrWhiteSpace(req.SourceMac) || string.IsNullOrWhiteSpace(req.DestinationMac))
+        return Results.BadRequest("Both SourceMac and DestinationMac are required.");
+
+    var route = graph.FindOptimalRoute(req.SourceMac, req.DestinationMac);
+    return Results.Ok(route);
+}).WithTags("Part 3 – Network Topology");
+
+// ── Dynamic Self-Healing Node Status Toggle ─────────────────────────────────
+app.MapPost("/api/topology/nodes/{mac}/status", (string mac, NodeStatusRequest req, MeshGraph graph, CommandService cmdSvc) =>
+{
+    bool updated = graph.SetNodeStatus(mac, req.IsOnline);
+    if (!req.IsOnline)
+    {
+        cmdSvc.MarkNodeDisconnected(mac);
+    }
+    else
+    {
+        cmdSvc.MarkNodeReconnected(mac);
+    }
+    return Results.Ok(new { MacAddress = mac, IsOnline = req.IsOnline, Updated = updated });
+}).WithTags("Part 3 – Network Topology");
+
+// ── Historical Telemetry Range Query (AVL Tree O(log N + K)) ───────────────
+app.MapGet("/api/topology/historical/range", (CommandService svc, DateTime? from, DateTime? to, string? nodeId) =>
+{
+    var start = from ?? DateTime.UtcNow.AddHours(-24);
+    var end   = to   ?? DateTime.UtcNow.AddMinutes(5);
+
+    var results = svc.QueryHistoricalRange(start, end, nodeId);
+    return Results.Ok(new
+    {
+        From = start,
+        To = end,
+        NodeId = nodeId ?? "All",
+        Count = results.Count,
+        Readings = results
+    });
+}).WithTags("Part 3 – Network Topology");
 
 app.Run("http://*:5050");
