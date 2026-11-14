@@ -372,5 +372,42 @@ app.MapGet("/api/topology/historical/range", (CommandService svc, DateTime? from
         Readings = results
     });
 }).WithTags("Part 3 – Network Topology");
+// ── Operator auth (Supabase is tried first in the browser; these are the local fallback) ──
+app.MapPost("/api/auth/register", (AuthReq r) =>
+{
+    if (string.IsNullOrWhiteSpace(r.Email) || string.IsNullOrWhiteSpace(r.Password))
+        return Results.BadRequest(new { message = "Email and password are required." });
+    if (r.Password.Length < 6)
+        return Results.BadRequest(new { message = "Password must be at least 6 characters." });
+    return Results.Ok(new
+    {
+        token = "local-" + Guid.NewGuid().ToString("N"),
+                      user = new { email = r.Email, fullName = r.FullName ?? r.Email.Split('@')[0] }
+    });
+}).WithTags("Auth");
 
+app.MapPost("/api/auth/login", (AuthReq r) =>
+{
+    if (string.IsNullOrWhiteSpace(r.Email) || string.IsNullOrWhiteSpace(r.Password))
+        return Results.BadRequest(new { message = "Email and password are required." });
+    return Results.Ok(new
+    {
+        token = "local-" + Guid.NewGuid().ToString("N"),
+                      user = new { email = r.Email, fullName = r.Email.Split('@')[0] }
+    });
+}).WithTags("Auth");
+
+app.MapPost("/api/auth/supabase-session", (AuthReq r) =>
+Results.Ok(new
+{
+    token = "sb-" + Guid.NewGuid().ToString("N"),
+           user = new { email = r.Email, fullName = r.FullName ?? r.Email?.Split('@')[0] }
+})).WithTags("Auth");
+app.MapPost("/api/topology/links/status", (LinkStatusRequest req, MeshGraph graph) =>
+{
+    bool updated = graph.SetEdgeStatus(req.SourceMac, req.DestinationMac, req.IsActive);
+    return Results.Ok(new { req.SourceMac, req.DestinationMac, req.IsActive, Updated = updated });
+}).WithTags("Part 3 – Network Topology");
 app.Run("http://*:5050");
+record AuthReq(string? Email, string? Password, string? FullName, string? ConfirmPassword, string? AccessToken);
+record LinkStatusRequest(string SourceMac, string DestinationMac, bool IsActive);
