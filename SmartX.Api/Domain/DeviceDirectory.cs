@@ -22,6 +22,10 @@ public sealed class DeviceDirectory
     private readonly Dictionary<string, DeviceState> _devices =
         new(StringComparer.OrdinalIgnoreCase);
 
+    // SINGLE SOURCE OF TRUTH: Hardware profiles stored directly in DeviceDirectory
+    private readonly Dictionary<string, SensorProfile> _profiles =
+        new(StringComparer.OrdinalIgnoreCase);
+
     // Chronologically ordered historical readings for timeline graphs
     private readonly SortedDictionary<DateTime, List<ReadingEntry>> _timeline = new();
 
@@ -60,6 +64,50 @@ public sealed class DeviceDirectory
                 _timeline.Remove(oldestKey);
             }
         }
+    }
+
+    // ── Single Source of Truth: Sensor Profile Operations ─────
+    public bool RegisterProfile(SensorProfile profile)
+    {
+        if (profile is null) return false;
+        lock (_gate)
+        {
+            if (_profiles.ContainsKey(profile.MacAddress)) return false;
+            _profiles[profile.MacAddress] = profile;
+
+            if (!_devices.ContainsKey(profile.MacAddress))
+            {
+                _devices[profile.MacAddress] = new DeviceState(
+                    profile.MacAddress,
+                    profile.NodeId,
+                    profile.Category.ToString(),
+                    0f,
+                    "unit",
+                    false,
+                    DateTime.UtcNow);
+            }
+            return true;
+        }
+    }
+
+    public SensorProfile? GetProfile(string macAddress)
+    {
+        if (string.IsNullOrWhiteSpace(macAddress)) return null;
+        lock (_gate)
+            return _profiles.TryGetValue(macAddress.ToUpperInvariant().Trim(), out var p) ? p : null;
+    }
+
+    public IReadOnlyList<SensorProfile> GetAllProfiles()
+    {
+        lock (_gate)
+            return _profiles.Values.ToList();
+    }
+
+    public bool ProfileExists(string macAddress)
+    {
+        if (string.IsNullOrWhiteSpace(macAddress)) return false;
+        lock (_gate)
+            return _profiles.ContainsKey(macAddress.ToUpperInvariant().Trim());
     }
 
     // ── Dictionary lookups (O(1)) ──────────────────────────────

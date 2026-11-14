@@ -2,43 +2,24 @@ namespace SmartX.Api.Services;
 
 using SmartX.Api.Domain;
 
-// Thread-safe in-memory sensor registry keyed by normalized MAC address.
-// Every public method acquires the gate before touching the dictionary.
+/// <summary>
+/// SensorRegistry acts as a domain service over DeviceDirectory, ensuring a
+/// SINGLE SOURCE OF TRUTH for all device profiles and states without duplicate in-memory dictionaries.
+/// </summary>
 public sealed class SensorRegistry
 {
-    private readonly Dictionary<string, SensorProfile> _store = new();
-    private readonly object _gate = new();
+    private readonly DeviceDirectory _directory;
 
-    public bool Register(SensorProfile profile)
+    public SensorRegistry(DeviceDirectory directory)
     {
-        if (profile is null) return false;
-
-        lock (_gate)
-        {
-            if (_store.ContainsKey(profile.MacAddress)) return false;
-            _store[profile.MacAddress] = profile;
-            return true;
-        }
+        _directory = directory ?? throw new ArgumentNullException(nameof(directory));
     }
 
-    public SensorProfile? Get(string macAddress)
-    {
-        if (string.IsNullOrWhiteSpace(macAddress)) return null;
+    public bool Register(SensorProfile profile) => _directory.RegisterProfile(profile);
 
-        lock (_gate)
-            return _store.TryGetValue(macAddress.ToUpperInvariant().Trim(), out var p) ? p : null;
-    }
+    public SensorProfile? Get(string macAddress) => _directory.GetProfile(macAddress);
 
-    public IReadOnlyList<SensorProfile> GetAll()
-    {
-        lock (_gate)
-            return _store.Values.ToList();
-    }
+    public IReadOnlyList<SensorProfile> GetAll() => _directory.GetAllProfiles();
 
-    public bool Exists(string macAddress)
-    {
-        if (string.IsNullOrWhiteSpace(macAddress)) return false;
-        lock (_gate)
-            return _store.ContainsKey(macAddress.ToUpperInvariant().Trim());
-    }
+    public bool Exists(string macAddress) => _directory.ProfileExists(macAddress);
 }

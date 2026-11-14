@@ -6,15 +6,14 @@ using SmartX.Api.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // ── Singleton services ─────────────────────────────────────────────────────
-// Part 1 singletons (unchanged)
-builder.Services.AddSingleton<SensorRegistry>();
+// DeviceDirectory is the SINGLE SOURCE OF TRUTH for all device profiles & states
+builder.Services.AddSingleton<DeviceDirectory>();   // Dictionary + SortedDictionary
+builder.Services.AddSingleton<SensorRegistry>();    // Facade delegating to DeviceDirectory
 builder.Services.AddSingleton<TelemetryStore>();
 builder.Services.AddSingleton<DeploymentValidator>();
 builder.Services.AddSingleton(_ =>
     new FileService(Path.Combine(Directory.GetCurrentDirectory(), "uploads")));
 
-// Part 2 singletons — each wraps a distinct data structure
-builder.Services.AddSingleton<DeviceDirectory>();   // Dictionary + SortedDictionary
 builder.Services.AddSingleton<PredictionEngine>();  // Pattern analysis engine
 builder.Services.AddSingleton<CommandService>();    // Stack, Queue, PriorityQueue, HashSet
 
