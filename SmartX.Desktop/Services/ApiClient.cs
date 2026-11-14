@@ -245,4 +245,12 @@ public sealed class ApiClient
         var response = await _client.PostAsync($"topology/nodes/{HttpUtility.UrlEncode(mac)}/status", json);
         return response.IsSuccessStatusCode;
     }
+
+    public async Task<bool> SetLinkStatusAsync(string a, string b, bool active)
+    {
+        var body = new { SourceMac = a, DestinationMac = b, IsActive = active };
+        var json = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");
+        var response = await _client.PostAsync("topology/links/status", json);
+        return response.IsSuccessStatusCode;
+    }
 }

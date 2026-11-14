@@ -194,7 +194,7 @@ public partial class TopologyViewModel : ViewModelBase
         {
             StatusText = "Simulating Repeater Alpha failure (dynamic self-healing)...";
             // Toggle Repeater Alpha status
-            bool ok = await _api.ToggleNodeStatusAsync("ESP:AA:01:02:03:04", false);
+            bool ok = await _api.SetLinkStatusAsync("GW:00:11:22:33:44", "ESP:AA:01:02:03:04", false);
             if (ok)
             {
                 StatusText = "Repeater Alpha taken OFFLINE. Network dynamic self-healing activated!";
@@ -214,7 +214,7 @@ public partial class TopologyViewModel : ViewModelBase
         try
         {
             StatusText = "Restoring Repeater Alpha online...";
-            bool ok = await _api.ToggleNodeStatusAsync("ESP:AA:01:02:03:04", true);
+            bool ok = await _api.SetLinkStatusAsync("GW:00:11:22:33:44", "ESP:AA:01:02:03:04", true);
             if (ok)
             {
                 StatusText = "Repeater Alpha restored. Network reconnected!";

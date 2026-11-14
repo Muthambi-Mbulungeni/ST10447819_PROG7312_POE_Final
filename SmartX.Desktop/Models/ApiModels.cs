@@ -25,6 +25,8 @@ public class HeatmapEntry
     public bool     IsAnomaly { get; set; }
     public string   Status    { get; set; } = string.Empty;
     public double[] History   { get; set; } = Array.Empty<double>();
+    public string DeviceId { get; set; } = string.Empty;
+    public string Unit     { get; set; } = string.Empty;
 }
 
 public class ValidationResult
