@@ -3,27 +3,106 @@
              xmlns:vm="using:SmartX.Desktop.ViewModels"
              x:Class="SmartX.Desktop.Views.TopologyView"
              x:DataType="vm:TopologyViewModel"
-             Background="#1a1a2e">
-    <StackPanel Margin="20" Spacing="20">
-        <TextBlock Text="Deployment Topology Validation" FontSize="24" FontWeight="Bold" Foreground="White" />
-        
-        <Button Content="Validate Network Deployment" 
-                Command="{Binding ValidateTopologyCommand}" 
-                Background="#3b82f6" Foreground="White" 
-                Padding="15,10" CornerRadius="5"/>
-        
-        <Border Background="#252542" CornerRadius="8" Padding="15">
-            <StackPanel Spacing="10">
-                <TextBlock Text="{Binding StatusText}" Foreground="White" FontWeight="Bold" FontSize="16" />
-                
-                <ItemsControl ItemsSource="{Binding BrokenPaths}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding}" Foreground="#ef4444" Margin="0,5" FontFamily="Consolas, Monospace" />
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </StackPanel>
-        </Border>
-    </StackPanel>
+             Background="#0f0f1a">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="24" Spacing="16">
+
+            <!-- Title & Status Header -->
+            <Border Background="#1a1a2e" CornerRadius="10" Padding="20">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0" Spacing="4">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="🕸" FontSize="20"/>
+                            <TextBlock Text="Pillar 3: Network Topology &amp; Mesh Routing" FontSize="20" FontWeight="Bold" Foreground="White" />
+                        </StackPanel>
+                        <TextBlock Text="ESP32 Wireless Mesh · Prim's Algorithm MST · BFS/DFS Subnet Traversal · AVL Tree Historical Queries"
+                                   FontSize="12" Foreground="#94a3b8" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                        <Border Background="#252542" CornerRadius="6" Padding="12,6">
+                            <TextBlock Text="{Binding NodeCount, StringFormat='Vertices: {0}'}" Foreground="#38bdf8" FontWeight="Bold" FontSize="13"/>
+                        </Border>
+                        <Border Background="#252542" CornerRadius="6" Padding="12,6">
+                            <TextBlock Text="{Binding EdgeCount, StringFormat='Wireless Links: {0}'}" Foreground="#a78bfa" FontWeight="Bold" FontSize="13"/>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Action Toolbar -->
+            <Border Background="#16162a" CornerRadius="8" Padding="14">
+                <WrapPanel Orientation="Horizontal">
+                    <Button Content="⚡ Compute Prim's MST" Command="{Binding ComputeMstCommand}"
+                            Background="#7c3aed" Foreground="White" FontWeight="Bold" Margin="0,0,10,6" Padding="14,8" CornerRadius="6"/>
+                    <Button Content="🔍 Run BFS Reachability Scan" Command="{Binding RunBfsCommand}"
+                            Background="#0284c7" Foreground="White" FontWeight="Bold" Margin="0,0,10,6" Padding="14,8" CornerRadius="6"/>
+                    <Button Content="🚨 Simulate Node Failover (Self-Healing)" Command="{Binding ToggleFailoverCommand}"
+                            Background="#dc2626" Foreground="White" FontWeight="Bold" Margin="0,0,10,6" Padding="14,8" CornerRadius="6"/>
+                    <Button Content="🔄 Restore Node" Command="{Binding RestoreNetworkCommand}"
+                            Background="#059669" Foreground="White" FontWeight="Bold" Margin="0,0,10,6" Padding="14,8" CornerRadius="6"/>
+                    <Button Content="🌲 Query AVL Tree (Historical)" Command="{Binding QueryHistoricalRangeCommand}"
+                            Background="#d97706" Foreground="White" FontWeight="Bold" Margin="0,0,10,6" Padding="14,8" CornerRadius="6"/>
+                    <Button Content="✓ Validate Deployment Tree" Command="{Binding ValidateTopologyCommand}"
+                            Background="#374151" Foreground="White" Margin="0,0,10,6" Padding="14,8" CornerRadius="6"/>
+                </WrapPanel>
+            </Border>
+
+            <!-- Status Banner -->
+            <Border Background="#1e1e38" CornerRadius="6" Padding="12">
+                <TextBlock Text="{Binding StatusText}" Foreground="#38bdf8" FontWeight="SemiBold" FontSize="13"/>
+            </Border>
+
+            <!-- Main Content Grid -->
+            <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto">
+
+                <!-- Column 1: Active Mesh Nodes -->
+                <Border Grid.Column="0" Background="#16162a" CornerRadius="8" Padding="14" Margin="0,0,10,0">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="ESP32 Mesh Vertices (Nodes)" FontSize="14" FontWeight="Bold" Foreground="#38bdf8"/>
+                        <TextBlock Text="Decentralized multi-hop nodes in mesh." FontSize="11" Foreground="#94a3b8"/>
+                        <ListBox ItemsSource="{Binding MeshNodesList}" Height="380" Background="#0f0f1a">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" Foreground="#e2e8f0" FontSize="11" FontFamily="Consolas, Monospace" Margin="0,2"/>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </StackPanel>
+                </Border>
+
+                <!-- Column 2: MST & Traversal -->
+                <Border Grid.Column="1" Background="#16162a" CornerRadius="8" Padding="14" Margin="0,0,10,0">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="Prim's Minimum Spanning Tree (MST)" FontSize="14" FontWeight="Bold" Foreground="#a78bfa"/>
+                        <TextBlock Text="{Binding MstSummary}" FontSize="11" Foreground="#c4b5fd" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding BfsSummary}" FontSize="11" Foreground="#38bdf8" TextWrapping="Wrap"/>
+                        <ListBox ItemsSource="{Binding MstEdgesList}" Height="340" Background="#0f0f1a">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" Foreground="#a78bfa" FontSize="11" FontFamily="Consolas, Monospace" Margin="0,2"/>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </StackPanel>
+                </Border>
+
+                <!-- Column 3: AVL Tree Historical Telemetry -->
+                <Border Grid.Column="2" Background="#16162a" CornerRadius="8" Padding="14">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="Historical Queries (AVL Tree O(log N + K))" FontSize="14" FontWeight="Bold" Foreground="#fbbf24"/>
+                        <TextBlock Text="{Binding HistoricalQuerySummary}" FontSize="11" Foreground="#fde68a" TextWrapping="Wrap"/>
+                        <ListBox ItemsSource="{Binding HistoricalResultsList}" Height="360" Background="#0f0f1a">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" Foreground="#fbbf24" FontSize="11" FontFamily="Consolas, Monospace" Margin="0,2"/>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </StackPanel>
+                </Border>
+
+            </Grid>
+
+        </StackPanel>
+    </ScrollViewer>
 </UserControl>

@@ -28,15 +28,15 @@
                 <!-- Nav buttons -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
 
-                    <!-- Part 1 — Sensor Telemetry -->
+                    <!-- Pillar 1 — Sensor Data Ingestion & Telemetry -->
                     <Button Command="{Binding NavigateToHeatmapCommand}"
                             Background="{Binding IsHeatmapActive, Converter={StaticResource NavColorConverter}}"
                             Foreground="White" CornerRadius="6" Padding="14,8">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <TextBlock Text="📡" FontSize="14"/>
                             <StackPanel>
-                                <TextBlock Text="Sensor Telemetry" FontSize="12" FontWeight="Bold"/>
-                                <TextBlock Text="Part 1 — Heatmap &amp; Ingestion" FontSize="9" Foreground="#94a3b8"/>
+                                <TextBlock Text="Sensor Data Ingestion" FontSize="12" FontWeight="Bold"/>
+                                <TextBlock Text="Pillar 1 — Ingestion &amp; Heatmap" FontSize="9" Foreground="#94a3b8"/>
                             </StackPanel>
                         </StackPanel>
                     </Button>
@@ -44,15 +44,15 @@
                     <!-- Separator -->
                     <Border Width="1" Background="#374151" Margin="4,4"/>
 
-                    <!-- Part 2 — Command Stream (NEW) -->
+                    <!-- Pillar 2 — Real Time Command Stream -->
                     <Button Command="{Binding NavigateToCommandStreamCommand}"
                             Background="{Binding IsCommandStreamActive, Converter={StaticResource NavColorConverter}}"
                             Foreground="White" CornerRadius="6" Padding="14,8">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <TextBlock Text="⚡" FontSize="14"/>
                             <StackPanel>
-                                <TextBlock Text="Command Stream" FontSize="12" FontWeight="Bold"/>
-                                <TextBlock Text="Part 2 — Queue · Stack · HashSet" FontSize="9" Foreground="#94a3b8"/>
+                                <TextBlock Text="Real Time Command Stream" FontSize="12" FontWeight="Bold"/>
+                                <TextBlock Text="Pillar 2 — Queue · Stack · Alerts" FontSize="9" Foreground="#94a3b8"/>
                             </StackPanel>
                         </StackPanel>
                     </Button>
@@ -60,15 +60,15 @@
                     <!-- Separator -->
                     <Border Width="1" Background="#374151" Margin="4,4"/>
 
-                    <!-- Part 3 — Topology (coming in PoE final) -->
+                    <!-- Pillar 3 — Network Topology & Mesh Routing -->
                     <Button Command="{Binding NavigateToTopologyCommand}"
                             Background="{Binding IsTopologyActive, Converter={StaticResource NavColorConverter}}"
                             Foreground="White" CornerRadius="6" Padding="14,8">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <TextBlock Text="🕸" FontSize="14"/>
                             <StackPanel>
-                                <TextBlock Text="Mesh Topology" FontSize="12" FontWeight="Bold"/>
-                                <TextBlock Text="Part 3 — Network Routing (PoE Final)" FontSize="9" Foreground="#94a3b8"/>
+                                <TextBlock Text="Network Topology &amp; Mesh Routing" FontSize="12" FontWeight="Bold"/>
+                                <TextBlock Text="Pillar 3 — Graph · MST · AVL Tree" FontSize="9" Foreground="#94a3b8"/>
                             </StackPanel>
                         </StackPanel>
                     </Button>

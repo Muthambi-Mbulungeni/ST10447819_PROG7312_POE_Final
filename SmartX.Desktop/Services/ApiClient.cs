@@ -201,4 +201,48 @@ public sealed class ApiClient
             $"devices/search?category={HttpUtility.UrlEncode(category)}",
             new StringContent("{}", Encoding.UTF8, "application/json"));
     }
+
+    // ── Part 3 Topology & Historical AVL Tree Methods ─────────────────────────
+
+    public async Task<JsonElement?> GetMeshTopologyAsync()
+    {
+        var response = await _client.GetAsync("topology/mesh");
+        if (!response.IsSuccessStatusCode) return null;
+        return await response.Content.ReadFromJsonAsync<JsonElement>();
+    }
+
+    public async Task<JsonElement?> GetMstAsync(string? startMac = null)
+    {
+        string uri = string.IsNullOrEmpty(startMac) ? "topology/mst" : $"topology/mst?startMac={HttpUtility.UrlEncode(startMac)}";
+        var response = await _client.GetAsync(uri);
+        if (!response.IsSuccessStatusCode) return null;
+        return await response.Content.ReadFromJsonAsync<JsonElement>();
+    }
+
+    public async Task<JsonElement?> GetBfsAsync(string? startMac = null)
+    {
+        string uri = string.IsNullOrEmpty(startMac) ? "topology/bfs" : $"topology/bfs?startMac={HttpUtility.UrlEncode(startMac)}";
+        var response = await _client.GetAsync(uri);
+        if (!response.IsSuccessStatusCode) return null;
+        return await response.Content.ReadFromJsonAsync<JsonElement>();
+    }
+
+    public async Task<JsonElement?> GetHistoricalRangeAsync(DateTime from, DateTime to, string? nodeId = null)
+    {
+        string uri = $"topology/historical/range?from={from:O}&to={to:O}";
+        if (!string.IsNullOrEmpty(nodeId))
+            uri += $"&nodeId={HttpUtility.UrlEncode(nodeId)}";
+
+        var response = await _client.GetAsync(uri);
+        if (!response.IsSuccessStatusCode) return null;
+        return await response.Content.ReadFromJsonAsync<JsonElement>();
+    }
+
+    public async Task<bool> ToggleNodeStatusAsync(string mac, bool isOnline)
+    {
+        var body = new { IsOnline = isOnline };
+        var json = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");
+        var response = await _client.PostAsync($"topology/nodes/{HttpUtility.UrlEncode(mac)}/status", json);
+        return response.IsSuccessStatusCode;
+    }
 }

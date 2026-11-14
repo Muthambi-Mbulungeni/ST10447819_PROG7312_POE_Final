@@ -1,0 +1,12 @@
+# Smart-X IoT Device Fleet Provisioning File
+# Format: MAC_Address, Device Name, Sensor Type, Location, MinThreshold, MaxThreshold
+# Supported Sensor Types: Temperature, Humidity, SoilMoisture, PowerMeter, RelaySwitch, Pressure, LightIntensity
+
+AA:11:22:33:44:01, GreenHouse Zone 4 Soil Sensor, SoilMoisture, Agricultural Sector East, 15.0, 75.0
+AA:11:22:33:44:02, Solar Grid High-Voltage Inverter, PowerMeter, Energy Farm Alpha, 210.0, 480.0
+AA:11:22:33:44:03, Cooling Fan Substation Relay, RelaySwitch, Server Room DC-1, 0.0, 1.0
+AA:11:22:33:44:04, Primary Cold Storage Ambient Temp, Temperature, Cold Room #3, -25.0, 4.0
+AA:11:22:33:44:05, Irrigation Zone Charlie Solenoid, RelaySwitch, Irrigation Station 2, 0.0, 1.0
+AA:11:22:33:44:06, Hydroponics Reservoir Water Level, SoilMoisture, Hydro Bay 12, 20.0, 80.0
+AA:11:22:33:44:07, Main Generator Fuel Line Pressure, Pressure, Generator Bunker, 1.2, 5.8
+AA:11:22:33:44:08, Photovoltaic Array Lux Sensor, LightIntensity, Solar Array Roof, 100.0, 85000.0
