@@ -4,7 +4,7 @@
 **Student Identifier:** ST10447819  
 **Course Module:** PROG7312 — Advanced Programming (2026)  
 **Target Milestone:** Portfolio of Evidence (PoE) Part 3 (100 Marks)  
-**GitHub Repository:** https://github.com/EMGPRS/prog7312-2026-prog7312-part-2-muthambi-mbulungeni.git  
+**GitHub Repository:** https://github.com/Muthambi-Mbulungeni/ST10447819_PROG7312_POE_Final.git 
 
 ---
 
