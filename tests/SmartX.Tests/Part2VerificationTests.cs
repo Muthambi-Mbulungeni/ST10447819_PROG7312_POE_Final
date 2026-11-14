@@ -105,9 +105,9 @@ namespace SmartX.Tests
         public void CommandStack_ShouldSupportUndoReversibility_LIFO()
         {
             // Arrange
-            var stack = new CommandStack(maxCapacity: 100);
+            var stack = new CommandStack(maxSize: 100);
             var cmd1 = new CommandRecord("CMD-1", "ESP-01", CommandType.RestartDevice, "REBOOT", DateTime.UtcNow);
-            var cmd2 = new CommandRecord("CMD-2", "ESP-02", CommandType.CalibrateSensor, "CALIB_ZERO", DateTime.UtcNow);
+            var cmd2 = new CommandRecord("CMD-2", "ESP-02", CommandType.AdjustThreshold, "THRESHOLD_50", DateTime.UtcNow);
             var cmd3 = new CommandRecord("CMD-3", "ESP-03", CommandType.ShutdownDevice, "EMERGENCY_SHUTDOWN", DateTime.UtcNow);
 
             // Act
